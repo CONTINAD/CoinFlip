@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info, Coins } from "lucide-react";
+import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import CasinoBackground from "@/components/CasinoBackground";
@@ -11,6 +11,7 @@ import WinnersPanel, { WinnerRecord } from "@/components/WinnersPanel";
 import LiveFeed, { FlipRecord } from "@/components/LiveFeed";
 import Leaderboard, { LeaderboardEntry } from "@/components/Leaderboard";
 import { cn } from "@/lib/utils";
+import coinLogo from "@/assets/coin-logo.png";
 
 const FLIP_INTERVAL = 120;
 
@@ -159,9 +160,11 @@ const Index = () => {
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 border border-amber-400/30">
-                  <Coins className="w-5 h-5 text-amber-900" />
-                </div>
+                <img 
+                  src={coinLogo} 
+                  alt="CoinFlip Logo" 
+                  className="w-11 h-11 object-contain drop-shadow-lg"
+                />
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary border-2 border-background animate-pulse" />
               </div>
               <div>
