@@ -72,15 +72,19 @@ const CoinFace = ({ side, isBack = false }: { side: "heads" | "tails"; isBack?: 
             className="text-2xl md:text-3xl lg:text-4xl font-black leading-none select-none tracking-tight"
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
+              color: isHeads ? undefined : "#FFFFFF",
               background: isHeads 
                 ? "linear-gradient(180deg, #a08020 0%, #6b5210 40%, #4a3810 70%, #3d2e08 100%)"
-                : "linear-gradient(180deg, #E6CCE6 0%, #CC99CC 40%, #9932CC 70%, #4B0082 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+                : undefined,
+              WebkitBackgroundClip: isHeads ? "text" : undefined,
+              WebkitTextFillColor: isHeads ? "transparent" : "#FFFFFF",
+              backgroundClip: isHeads ? "text" : undefined,
+              textShadow: isHeads 
+                ? undefined 
+                : "2px 3px 4px rgba(0,0,0,0.5), 0 0 20px rgba(128,0,128,0.5)",
               filter: isHeads 
                 ? "drop-shadow(2px 3px 0 rgba(255,250,205,0.4)) drop-shadow(-1px -1px 0 rgba(0,0,0,0.3))"
-                : "drop-shadow(2px 3px 0 rgba(200,150,200,0.4)) drop-shadow(-1px -1px 0 rgba(0,0,0,0.4))"
+                : undefined
             }}
           >
             {isHeads ? "HEADS" : "HOLDER"}
