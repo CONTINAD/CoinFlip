@@ -1,12 +1,13 @@
 import { useState, useCallback } from "react";
-import Coin from "@/components/Coin";
-import CountdownTimer from "@/components/CountdownTimer";
-import FlipResult from "@/components/FlipResult";
-import FlipHistory, { FlipRecord } from "@/components/FlipHistory";
-import StatsPanel from "@/components/StatsPanel";
+import { Play, Pause, RotateCcw, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import BackgroundEffects from "@/components/BackgroundEffects";
+import PremiumCoin from "@/components/PremiumCoin";
+import PremiumTimer from "@/components/PremiumTimer";
+import PremiumResult from "@/components/PremiumResult";
+import PremiumStats from "@/components/PremiumStats";
+import PremiumHistory, { FlipRecord } from "@/components/PremiumHistory";
 
 const FLIP_INTERVAL = 120; // 2 minutes in seconds
 
@@ -49,11 +50,11 @@ const Index = () => {
           : "A lucky holder receives the reward",
       });
 
-      // Hide result after 3 seconds
+      // Hide result after 4 seconds
       setTimeout(() => {
         setShowResult(false);
-      }, 3000);
-    }, 1500);
+      }, 4000);
+    }, 2000);
   }, [isFlipping, toast]);
 
   const handleManualFlip = () => {
@@ -82,48 +83,49 @@ const Index = () => {
   const holderCount = history.filter((h) => h.result === "holder").length;
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(160_100%_50%_/_0.05)_0%,_transparent_70%)]" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
+    <div className="min-h-screen relative">
+      <BackgroundEffects />
       
-      {/* Grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
-                           linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px',
-        }}
-      />
+      {/* Result overlay */}
+      <PremiumResult result={currentResult} isVisible={showResult} />
 
-      <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
+      <div className="relative z-10 container mx-auto px-4 py-8 md:py-16">
         {/* Header */}
-        <header className="text-center mb-12">
-          <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-3">
-            <span className="text-glow-primary text-primary">COIN</span>{" "}
-            <span className="text-accent">FLIP</span>
+        <header className="text-center mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-sm font-medium text-primary tracking-wide">LIVE</span>
+          </div>
+          
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-black mb-4 tracking-tight">
+            <span className="text-gradient-gold text-glow-gold">COIN</span>
+            <span className="text-foreground mx-3">×</span>
+            <span className="text-gradient-ember">FLIP</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Every 2 minutes, fate decides: burn tokens or reward a holder
+          
+          <p className="text-muted-foreground text-lg md:text-xl max-w-lg mx-auto leading-relaxed">
+            Every <span className="text-primary font-semibold">2 minutes</span>, fate decides: 
+            <span className="text-ember"> burn tokens</span> or 
+            <span className="text-royal"> reward a holder</span>
           </p>
         </header>
 
-        {/* Main content */}
-        <div className="flex flex-col items-center gap-8 md:gap-12">
-          {/* Stats Panel */}
-          <StatsPanel
-            totalFlips={history.length}
-            totalBurned={`${burnCount * 100}K`}
-            holdersRewarded={holderCount}
+        {/* Stats */}
+        <div className="flex justify-center mb-12 md:mb-16">
+          <PremiumStats 
+            totalFlips={history.length} 
+            burnCount={burnCount}
+            holderCount={holderCount}
           />
+        </div>
 
-          {/* Coin and Timer section */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 w-full">
+        {/* Main game area */}
+        <div className="flex flex-col items-center gap-12 md:gap-16 mb-12 md:mb-16">
+          {/* Coin and controls row */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-20 w-full">
             {/* Timer */}
-            <div className="order-2 md:order-1">
-              <CountdownTimer
+            <div className="order-2 lg:order-1">
+              <PremiumTimer
                 seconds={FLIP_INTERVAL}
                 onComplete={performFlip}
                 isRunning={isRunning && !isFlipping}
@@ -131,69 +133,107 @@ const Index = () => {
             </div>
 
             {/* Coin */}
-            <div className="relative order-1 md:order-2">
-              <Coin isFlipping={isFlipping} result={currentResult} />
-              <FlipResult result={currentResult} isVisible={showResult} />
+            <div className="order-1 lg:order-2">
+              <PremiumCoin isFlipping={isFlipping} result={currentResult} />
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col gap-3 order-3">
+            <div className="flex flex-col gap-4 order-3">
               <Button
+                variant="premium"
+                size="xl"
                 onClick={handleManualFlip}
                 disabled={isFlipping}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-display font-semibold px-8 py-6 text-lg glow-primary"
+                className="min-w-[180px]"
               >
+                <Zap className="w-5 h-5" />
                 {isFlipping ? "Flipping..." : "Flip Now"}
               </Button>
               
-              <div className="flex gap-2">
+              <div className="flex gap-3 justify-center">
                 <Button
-                  variant="outline"
+                  variant="glass"
                   size="icon"
                   onClick={toggleAutoFlip}
-                  className="border-border/50 hover:bg-muted"
                 >
                   {isRunning ? (
-                    <Pause className="w-4 h-4" />
+                    <Pause className="w-5 h-5" />
                   ) : (
-                    <Play className="w-4 h-4" />
+                    <Play className="w-5 h-5" />
                   )}
                 </Button>
                 
                 <Button
-                  variant="outline"
+                  variant="glass"
                   size="icon"
                   onClick={resetHistory}
-                  className="border-border/50 hover:bg-muted"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-5 h-5" />
                 </Button>
+              </div>
+
+              {/* Status indicator */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                  Auto-flip: <span className={isRunning ? "text-accent" : "text-muted-foreground"}>{isRunning ? "Active" : "Paused"}</span>
+                </p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* History */}
-          <FlipHistory history={history} />
+        {/* History */}
+        <div className="flex justify-center mb-12">
+          <PremiumHistory history={history} />
+        </div>
 
-          {/* Info section */}
-          <div className="w-full max-w-2xl text-center">
-            <div className="gradient-border rounded-xl p-6 bg-card/30 backdrop-blur-sm">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-3">
-                How It Works
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                <div className="p-4 bg-destructive/5 rounded-lg border border-destructive/20">
-                  <p className="font-semibold text-destructive mb-1">🔥 Buyback & Burn</p>
-                  <p>Tokens are purchased from the market and permanently removed from circulation</p>
+        {/* How it works */}
+        <div className="max-w-3xl mx-auto">
+          <div className="glass-card rounded-2xl p-8 border border-border/50">
+            <h3 className="font-display text-xl font-bold text-center mb-6 text-gradient-gold">
+              How It Works
+            </h3>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="relative group p-5 rounded-xl bg-ember/5 border border-ember/20 hover:border-ember/40 transition-all duration-300">
+                <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-ember/20 to-flame/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-ember/20 flex items-center justify-center">
+                      <span className="text-xl">🔥</span>
+                    </div>
+                    <h4 className="font-display font-bold text-ember">Buyback & Burn</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Tokens are purchased from the market and permanently removed from circulation, reducing supply.
+                  </p>
                 </div>
-                <div className="p-4 bg-secondary/5 rounded-lg border border-secondary/20">
-                  <p className="font-semibold text-secondary mb-1">🎁 Random Holder</p>
-                  <p>A randomly selected token holder receives the reward directly to their wallet</p>
+              </div>
+              
+              <div className="relative group p-5 rounded-xl bg-royal/5 border border-royal/20 hover:border-royal/40 transition-all duration-300">
+                <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-royal/20 to-electric/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-royal/20 flex items-center justify-center">
+                      <span className="text-xl">🎁</span>
+                    </div>
+                    <h4 className="font-display font-bold text-royal">Random Holder</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A randomly selected token holder receives the reward directly to their wallet.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="text-center mt-16 pb-8">
+          <p className="text-sm text-muted-foreground">
+            Built with <span className="text-primary">♦</span> for the community
+          </p>
+        </footer>
       </div>
     </div>
   );
