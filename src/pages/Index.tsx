@@ -28,6 +28,23 @@ const SolanaLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// PumpFun Logo Component
+const PumpFunLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 32 32" className={className} fill="none">
+    <circle cx="16" cy="16" r="16" fill="#00D1A7"/>
+    <path d="M10 20V12h4c2.2 0 4 1.8 4 4s-1.8 4-4 4h-4zm2-2h2c1.1 0 2-.9 2-2s-.9-2-2-2h-2v4z" fill="white"/>
+    <circle cx="22" cy="12" r="2" fill="white"/>
+    <path d="M20 16v6h4v-6h-4z" fill="white"/>
+  </svg>
+);
+
+// X (Twitter) Logo Component
+const XLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
 const MOCK_WALLETS = [
   "7xKXp3mN9vWq", "BvR2pQ8kLmNx", "9aZxW4yLmPqR", "mN3pK7vRsTuW",
   "Qw8mXt2PnYzA", "Lp5zHj9NcBvD", "Yk4rBs6MqFgH", "Df2wNg8XvJkL"
@@ -179,8 +196,34 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Ticker */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl glass-premium border border-amber-500/30">
+                <span className="text-xs font-bold text-amber-400 font-mono">$COINFLIP</span>
+              </div>
+
+              {/* Buy on PumpFun */}
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#00D1A7]/15 border border-[#00D1A7]/30 hover:bg-[#00D1A7]/25 hover:border-[#00D1A7]/50 transition-all duration-300"
+              >
+                <PumpFunLogo className="w-5 h-5" />
+                <span className="text-xs font-bold text-[#00D1A7] hidden sm:inline">Buy</span>
+              </a>
+
+              {/* X (Twitter) Link */}
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-9 h-9 rounded-xl glass-premium border border-border/40 hover:border-foreground/30 hover:bg-foreground/5 transition-all duration-300"
+              >
+                <XLogo className="w-4 h-4 text-foreground" />
+              </a>
+
               {/* SOL Balance */}
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl glass-premium border border-border/40">
+              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl glass-premium border border-border/40">
                 <SolanaLogo className="w-4 h-4" />
                 <div className="flex flex-col">
                   <span className="font-mono text-sm font-bold text-foreground leading-none">
