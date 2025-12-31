@@ -2,59 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 240 15% 3%;
-    --foreground: 45 30% 96%;
+    --background: 220 20% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 240 12% 6%;
-    --card-foreground: 45 30% 96%;
+    --card: 220 18% 7%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 240 12% 6%;
-    --popover-foreground: 45 30% 96%;
+    --popover: 220 18% 7%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 45 100% 55%;
-    --primary-foreground: 240 15% 3%;
+    --primary: 142 72% 50%;
+    --primary-foreground: 220 20% 4%;
 
-    --secondary: 280 80% 55%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 10% 12%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 220 15% 12%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 160 100% 45%;
-    --accent-foreground: 240 15% 3%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 220 20% 4%;
 
-    --destructive: 15 100% 55%;
+    --destructive: 0 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 10% 15%;
-    --input: 240 10% 12%;
-    --ring: 45 100% 55%;
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 142 72% 50%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    /* Premium color palette */
-    --gold-light: 45 100% 70%;
-    --gold: 45 100% 55%;
-    --gold-dark: 35 100% 40%;
-    --ember: 15 100% 55%;
-    --flame: 25 100% 50%;
-    --royal-purple: 280 80% 55%;
-    --electric-blue: 200 100% 60%;
+    /* Casino color palette */
+    --gold-light: 45 100% 65%;
+    --gold: 45 100% 50%;
+    --gold-dark: 38 100% 40%;
+    --ember: 16 100% 55%;
+    --flame: 30 100% 50%;
+    --royal-purple: 270 70% 55%;
+    --electric-blue: 210 100% 55%;
     --neon-cyan: 180 100% 50%;
+    --casino-green: 142 72% 50%;
+    --casino-red: 0 85% 55%;
 
-    /* Premium effects */
-    --glow-gold: 0 0 60px hsl(45 100% 55% / 0.4), 0 0 120px hsl(45 100% 55% / 0.2);
-    --glow-ember: 0 0 60px hsl(15 100% 55% / 0.5), 0 0 120px hsl(25 100% 50% / 0.3);
-    --glow-purple: 0 0 60px hsl(280 80% 55% / 0.5), 0 0 120px hsl(280 80% 55% / 0.3);
-    
-    --gradient-premium: linear-gradient(135deg, hsl(240 15% 5%) 0%, hsl(240 20% 8%) 50%, hsl(260 15% 6%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(50 100% 70%) 0%, hsl(45 100% 55%) 30%, hsl(35 100% 45%) 70%, hsl(30 100% 35%) 100%);
-    --gradient-ember: linear-gradient(135deg, hsl(25 100% 60%) 0%, hsl(15 100% 50%) 50%, hsl(5 100% 45%) 100%);
-    --gradient-glass: linear-gradient(135deg, hsl(240 10% 15% / 0.6) 0%, hsl(240 10% 8% / 0.8) 100%);
+    /* Casino surface colors */
+    --surface-1: 220 20% 6%;
+    --surface-2: 220 18% 8%;
+    --surface-3: 220 16% 10%;
+    --surface-4: 220 14% 13%;
   }
 }
 
@@ -69,8 +67,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--gradient-premium);
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -78,136 +75,159 @@
 
 @layer utilities {
   .font-display {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Rajdhani', sans-serif;
   }
 
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(50 100% 75%) 0%, hsl(45 100% 60%) 50%, hsl(35 100% 50%) 100%);
+    background: linear-gradient(135deg, hsl(50 100% 70%) 0%, hsl(45 100% 55%) 50%, hsl(38 100% 45%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-green {
+    background: linear-gradient(135deg, hsl(145 80% 60%) 0%, hsl(142 72% 50%) 50%, hsl(140 70% 40%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-ember {
-    background: linear-gradient(135deg, hsl(35 100% 60%) 0%, hsl(15 100% 55%) 50%, hsl(0 100% 50%) 100%);
+    background: linear-gradient(135deg, hsl(35 100% 60%) 0%, hsl(16 100% 55%) 50%, hsl(0 90% 50%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-purple {
-    background: linear-gradient(135deg, hsl(280 100% 75%) 0%, hsl(280 80% 60%) 50%, hsl(260 100% 70%) 100%);
+    background: linear-gradient(135deg, hsl(280 100% 75%) 0%, hsl(270 70% 55%) 50%, hsl(260 80% 65%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .glass-card {
-    background: linear-gradient(135deg, hsl(240 10% 12% / 0.7) 0%, hsl(240 10% 8% / 0.9) 100%);
-    backdrop-filter: blur(20px);
-    border: 1px solid hsl(240 10% 20% / 0.5);
+  /* Casino card styles */
+  .casino-card {
+    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
+    border: 1px solid hsl(220 15% 15%);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 hsl(220 15% 18% / 0.5);
   }
 
-  .glass-card-gold {
-    background: linear-gradient(135deg, hsl(45 30% 10% / 0.6) 0%, hsl(240 10% 8% / 0.9) 100%);
-    backdrop-filter: blur(20px);
-    border: 1px solid hsl(45 50% 30% / 0.3);
+  .casino-card-gold {
+    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
+    border: 1px solid hsl(45 50% 25% / 0.3);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 60px hsl(45 100% 50% / 0.05);
+  }
+
+  .casino-card-green {
+    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
+    border: 1px solid hsl(142 50% 30% / 0.3);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 40px hsl(142 72% 50% / 0.08);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px hsl(142 72% 50% / 0.3), 0 0 60px hsl(142 72% 50% / 0.15);
   }
 
   .glow-gold {
-    box-shadow: var(--glow-gold);
+    box-shadow: 0 0 30px hsl(45 100% 50% / 0.3), 0 0 80px hsl(45 100% 50% / 0.15);
   }
 
   .glow-ember {
-    box-shadow: var(--glow-ember);
+    box-shadow: 0 0 30px hsl(16 100% 55% / 0.4), 0 0 80px hsl(30 100% 50% / 0.2);
   }
 
   .glow-purple {
-    box-shadow: var(--glow-purple);
+    box-shadow: 0 0 30px hsl(270 70% 55% / 0.4), 0 0 80px hsl(270 70% 55% / 0.2);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 20px hsl(142 72% 50% / 0.5);
   }
 
   .text-glow-gold {
-    text-shadow: 0 0 30px hsl(45 100% 55% / 0.6), 0 0 60px hsl(45 100% 55% / 0.4);
-  }
-
-  .text-glow-ember {
-    text-shadow: 0 0 30px hsl(15 100% 55% / 0.6), 0 0 60px hsl(15 100% 55% / 0.4);
-  }
-
-  .text-glow-purple {
-    text-shadow: 0 0 30px hsl(280 80% 55% / 0.6), 0 0 60px hsl(280 80% 55% / 0.4);
+    text-shadow: 0 0 20px hsl(45 100% 50% / 0.5);
   }
 }
 
-/* Premium coin animation */
-@keyframes coinFlipPremium {
+/* 3D Coin flip animation */
+@keyframes coinFlip3D {
   0% {
     transform: rotateY(0deg) rotateX(0deg) scale(1);
-    filter: brightness(1);
   }
-  15% {
-    transform: rotateY(540deg) rotateX(15deg) scale(1.15);
-    filter: brightness(1.3);
+  10% {
+    transform: rotateY(180deg) rotateX(10deg) scale(1.1);
+  }
+  20% {
+    transform: rotateY(360deg) rotateX(-5deg) scale(1.15);
   }
   30% {
-    transform: rotateY(1080deg) rotateX(-10deg) scale(1.25);
-    filter: brightness(1.5);
+    transform: rotateY(540deg) rotateX(8deg) scale(1.2);
+  }
+  40% {
+    transform: rotateY(720deg) rotateX(-8deg) scale(1.18);
   }
   50% {
-    transform: rotateY(1800deg) rotateX(5deg) scale(1.2);
-    filter: brightness(1.4);
+    transform: rotateY(900deg) rotateX(5deg) scale(1.15);
+  }
+  60% {
+    transform: rotateY(1080deg) rotateX(-3deg) scale(1.1);
   }
   70% {
-    transform: rotateY(2520deg) rotateX(-5deg) scale(1.1);
-    filter: brightness(1.2);
+    transform: rotateY(1260deg) rotateX(2deg) scale(1.08);
   }
-  85% {
-    transform: rotateY(3240deg) rotateX(2deg) scale(1.05);
-    filter: brightness(1.1);
+  80% {
+    transform: rotateY(1440deg) rotateX(-1deg) scale(1.04);
+  }
+  90% {
+    transform: rotateY(1620deg) rotateX(0deg) scale(1.02);
   }
   100% {
-    transform: rotateY(3600deg) rotateX(0deg) scale(1);
-    filter: brightness(1);
+    transform: rotateY(1800deg) rotateX(0deg) scale(1);
   }
 }
 
-.animate-flip-premium {
-  animation: coinFlipPremium 2s cubic-bezier(0.25, 0.1, 0.25, 1);
+.animate-coin-flip {
+  animation: coinFlip3D 2.5s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Floating animation */
-@keyframes floatPremium {
+/* Idle coin hover */
+@keyframes coinIdle {
   0%, 100% {
     transform: translateY(0) rotateY(0deg);
   }
-  25% {
-    transform: translateY(-8px) rotateY(5deg);
-  }
   50% {
-    transform: translateY(-12px) rotateY(0deg);
-  }
-  75% {
-    transform: translateY(-8px) rotateY(-5deg);
+    transform: translateY(-8px) rotateY(10deg);
   }
 }
 
-.animate-float-premium {
-  animation: floatPremium 4s ease-in-out infinite;
+.animate-coin-idle {
+  animation: coinIdle 3s ease-in-out infinite;
 }
 
-/* Pulse glow ring */
-@keyframes pulseRing {
+/* Shine sweep effect */
+@keyframes shineSweep {
   0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.4;
+    transform: translateX(-100%) rotate(35deg);
   }
   100% {
-    transform: scale(0.95);
-    opacity: 0.8;
+    transform: translateX(200%) rotate(35deg);
+  }
+}
+
+.animate-shine {
+  animation: shineSweep 3s ease-in-out infinite;
+}
+
+/* Pulse ring */
+@keyframes pulseRing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.3;
   }
 }
 
@@ -215,135 +235,98 @@
   animation: pulseRing 2s ease-in-out infinite;
 }
 
-/* Expanding ring */
-@keyframes expandRing {
+/* Expand outward */
+@keyframes expandOut {
   0% {
-    transform: scale(0.8);
-    opacity: 1;
+    transform: scale(0.9);
+    opacity: 0.8;
   }
   100% {
-    transform: scale(2.5);
+    transform: scale(2);
     opacity: 0;
   }
 }
 
-.animate-expand-ring {
-  animation: expandRing 1.5s ease-out infinite;
+.animate-expand {
+  animation: expandOut 1s ease-out infinite;
 }
 
-/* Shimmer effect */
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(45 100% 70% / 0.1) 25%,
-    hsl(45 100% 80% / 0.2) 50%,
-    hsl(45 100% 70% / 0.1) 75%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-/* Particle float */
-@keyframes particleFloat {
+/* Live dot pulse */
+@keyframes livePulse {
   0%, 100% {
-    transform: translateY(0) translateX(0) rotate(0deg);
-    opacity: 0.3;
-  }
-  25% {
-    transform: translateY(-20px) translateX(10px) rotate(90deg);
-    opacity: 0.6;
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    transform: translateY(-40px) translateX(-5px) rotate(180deg);
-    opacity: 0.4;
-  }
-  75% {
-    transform: translateY(-20px) translateX(-10px) rotate(270deg);
     opacity: 0.5;
+    transform: scale(0.85);
   }
 }
 
-.animate-particle {
-  animation: particleFloat 8s ease-in-out infinite;
+.animate-live {
+  animation: livePulse 1.5s ease-in-out infinite;
 }
 
-/* Countdown pulse */
-@keyframes countdownPulse {
+/* Result slide in */
+@keyframes slideInUp {
+  0% {
+    transform: translateY(30px) scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Timer tick */
+@keyframes timerPulse {
   0%, 100% {
     transform: scale(1);
-    opacity: 1;
   }
   50% {
-    transform: scale(1.05);
-    opacity: 0.9;
+    transform: scale(1.03);
   }
 }
 
-.animate-countdown-pulse {
-  animation: countdownPulse 1s ease-in-out infinite;
+.animate-timer-pulse {
+  animation: timerPulse 0.5s ease-in-out;
 }
 
-/* Result reveal */
-@keyframes revealResult {
-  0% {
-    transform: scale(0.5) translateY(20px);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1) translateY(-5px);
-  }
-  100% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-reveal {
-  animation: revealResult 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Background orbs */
-@keyframes orbFloat {
+/* Coin shadow pulse */
+@keyframes shadowPulse {
   0%, 100% {
-    transform: translate(0, 0) scale(1);
+    transform: scaleX(1);
+    opacity: 0.3;
   }
-  33% {
-    transform: translate(30px, -30px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  50% {
+    transform: scaleX(0.85);
+    opacity: 0.15;
   }
 }
 
-.animate-orb {
-  animation: orbFloat 20s ease-in-out infinite;
+.animate-shadow-pulse {
+  animation: shadowPulse 3s ease-in-out infinite;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(240 10% 8%);
+  background: hsl(220 18% 7%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(45 50% 30%);
-  border-radius: 3px;
+  background: hsl(220 15% 20%);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(45 60% 40%);
+  background: hsl(220 15% 30%);
 }
