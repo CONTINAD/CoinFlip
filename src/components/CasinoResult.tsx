@@ -1,15 +1,23 @@
 import { cn } from "@/lib/utils";
-import { Flame, Trophy, Sparkles } from "lucide-react";
+import { Flame, Trophy, Sparkles, ExternalLink } from "lucide-react";
 
 interface CasinoResultProps {
   result: "burn" | "holder" | null;
   isVisible: boolean;
+  txHash?: string;
+  wallet?: string;
+  amount?: number;
 }
 
-const CasinoResult = ({ result, isVisible }: CasinoResultProps) => {
+const CasinoResult = ({ result, isVisible, txHash, wallet, amount }: CasinoResultProps) => {
   if (!isVisible || !result) return null;
 
   const isBurn = result === "burn";
+  const solscanUrl = txHash ? `https://solscan.io/tx/${txHash}` : "#";
+
+  const formatWallet = (address: string) => {
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
@@ -18,7 +26,7 @@ const CasinoResult = ({ result, isVisible }: CasinoResultProps) => {
 
       {/* Result card */}
       <div className={cn(
-        "relative animate-slide-up",
+        "relative animate-slide-up pointer-events-auto",
         "stake-card-elevated rounded-2xl px-10 py-8 border max-w-sm mx-4",
         isBurn 
           ? "border-ember/30 glow-ember" 
@@ -65,6 +73,20 @@ const CasinoResult = ({ result, isVisible }: CasinoResultProps) => {
             </h2>
           </div>
 
+          {/* Amount & Wallet Info */}
+          {amount && (
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">
+                {amount.toLocaleString()} <span className="text-muted-foreground text-sm font-normal">tokens</span>
+              </p>
+              {!isBurn && wallet && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sent to <span className="font-mono text-foreground">{formatWallet(wallet)}</span>
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Description */}
           <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
             {isBurn
@@ -72,7 +94,25 @@ const CasinoResult = ({ result, isVisible }: CasinoResultProps) => {
               : "A random holder has been selected for the reward!"}
           </p>
 
-          {/* Badge */}
+          {/* View on Solscan button */}
+          {txHash && (
+            <a
+              href={solscanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
+                isBurn 
+                  ? "bg-ember/15 text-ember border border-ember/25 hover:bg-ember/25 hover:border-ember/40"
+                  : "bg-royal/15 text-royal border border-royal/25 hover:bg-royal/25 hover:border-royal/40"
+              )}
+            >
+              <span>View on Solscan</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+
+          {/* Processing Badge */}
           <div className={cn(
             "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
             isBurn 

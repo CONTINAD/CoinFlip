@@ -55,6 +55,9 @@ const Index = () => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [currentResult, setCurrentResult] = useState<"burn" | "holder" | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [currentTxHash, setCurrentTxHash] = useState<string | undefined>();
+  const [currentWallet, setCurrentWallet] = useState<string | undefined>();
+  const [currentAmount, setCurrentAmount] = useState<number | undefined>();
   const [history, setHistory] = useState<FlipRecord[]>([]);
   const [winners, setWinners] = useState<WinnerRecord[]>([]);
   const [totalBurned, setTotalBurned] = useState(0);
@@ -100,8 +103,13 @@ const Index = () => {
       const amount = Math.floor(Math.random() * 50000) + 10000;
       const solValue = (Math.random() * 0.5 + 0.1);
       const devCutSol = solValue * 0.02;
+      const txHash = generateMockTxHash();
+      const wallet = result === "holder" ? MOCK_WALLETS[Math.floor(Math.random() * MOCK_WALLETS.length)] : undefined;
       
       setCurrentResult(result);
+      setCurrentTxHash(txHash);
+      setCurrentWallet(wallet);
+      setCurrentAmount(amount);
       setIsFlipping(false);
       setShowResult(true);
 
@@ -115,9 +123,9 @@ const Index = () => {
       const newWinner: WinnerRecord = {
         id: Date.now(),
         type: result,
-        wallet: result === "holder" ? MOCK_WALLETS[Math.floor(Math.random() * MOCK_WALLETS.length)] : undefined,
+        wallet,
         amount,
-        txHash: generateMockTxHash(),
+        txHash,
         timestamp: new Date(),
       };
       setWinners((prev) => [...prev, newWinner]);
@@ -160,7 +168,13 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <CasinoBackground />
-      <CasinoResult result={currentResult} isVisible={showResult} />
+      <CasinoResult 
+        result={currentResult} 
+        isVisible={showResult} 
+        txHash={currentTxHash}
+        wallet={currentWallet}
+        amount={currentAmount}
+      />
 
       <div className="relative z-10">
         {/* Top bar */}
