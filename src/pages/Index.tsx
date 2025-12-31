@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info, Coins, Wallet } from "lucide-react";
+import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import CasinoBackground from "@/components/CasinoBackground";
@@ -187,16 +187,6 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Connect Wallet Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden md:flex h-9 px-4 rounded-xl glass border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-xs font-semibold gap-2"
-              >
-                <Wallet className="w-3.5 h-3.5" />
-                Connect
-              </Button>
-              
               {/* Live indicator */}
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/25">
                 <div className="w-2 h-2 rounded-full bg-primary animate-live" />
