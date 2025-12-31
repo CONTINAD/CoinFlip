@@ -5,36 +5,6 @@ interface CasinoCoinProps {
   result: "burn" | "holder" | null;
 }
 
-const CoinEdge = ({ isHeads }: { isHeads: boolean }) => {
-  // Create multiple edge segments for 3D depth effect
-  const edgeLayers = [];
-  for (let i = 0; i < 12; i++) {
-    const zOffset = -1 - i * 1.2;
-    edgeLayers.push(
-      <div
-        key={i}
-        className="absolute inset-[1%] rounded-full"
-        style={{
-          background: isHeads
-            ? `linear-gradient(${160 + i * 3}deg, 
-                ${i % 2 === 0 ? '#c9a227' : '#8b6914'} 0%, 
-                ${i % 2 === 0 ? '#8b6914' : '#5a4510'} 50%, 
-                ${i % 2 === 0 ? '#6b5210' : '#3d2e08'} 100%)`
-            : `linear-gradient(${160 + i * 3}deg, 
-                ${i % 2 === 0 ? '#7B2D8E' : '#5B1A6B'} 0%, 
-                ${i % 2 === 0 ? '#5B1A6B' : '#3D0F4A'} 50%, 
-                ${i % 2 === 0 ? '#4B0082' : '#2E0854'} 100%)`,
-          transform: `translateZ(${zOffset}px)`,
-          boxShadow: i === 0 
-            ? "inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.4)"
-            : undefined
-        }}
-      />
-    );
-  }
-  return <>{edgeLayers}</>;
-};
-
 const CoinFace = ({ 
   type, 
   isBack = false 
@@ -46,164 +16,136 @@ const CoinFace = ({
   
   return (
     <div 
-      className="absolute inset-0 rounded-full"
+      className="absolute inset-0 rounded-full overflow-hidden"
       style={{
+        background: isHeads 
+          ? `radial-gradient(ellipse 85% 55% at 28% 18%, rgba(255,250,205,0.95) 0%, transparent 32%),
+             radial-gradient(ellipse 65% 45% at 72% 82%, rgba(120,90,15,0.6) 0%, transparent 38%),
+             radial-gradient(circle at 50% 50%, #ffd700 0%, #f4c430 18%, #daa520 38%, #cd9b1d 55%, #b8860b 72%, #8b6914 88%, #6b5210 100%)`
+          : `radial-gradient(ellipse 85% 55% at 28% 18%, rgba(200,150,220,0.7) 0%, transparent 32%),
+             radial-gradient(ellipse 65% 45% at 72% 82%, rgba(60,0,100,0.6) 0%, transparent 38%),
+             radial-gradient(circle at 50% 50%, #9932CC 0%, #8B2DB2 18%, #7B2795 38%, #6B0B6B 55%, #5B0A5B 72%, #4B0082 88%, #2E0854 100%)`,
+        boxShadow: `
+          inset 0 15px 50px rgba(255,255,255,0.55),
+          inset 0 -15px 50px rgba(0,0,0,0.5),
+          inset 10px 0 40px rgba(255,255,255,0.18),
+          inset -10px 0 40px rgba(0,0,0,0.35),
+          0 30px 60px -15px rgba(0,0,0,0.5)
+        `,
         transform: isBack ? "rotateY(180deg)" : "rotateY(0deg)",
         backfaceVisibility: "hidden",
-        WebkitBackfaceVisibility: "hidden",
-        transformStyle: "preserve-3d"
+        WebkitBackfaceVisibility: "hidden"
       }}
     >
-      {/* 3D Edge layers */}
-      <CoinEdge isHeads={isHeads} />
-      
-      {/* Main coin face */}
+      {/* Outer raised rim with 3D bevel */}
       <div 
-        className="absolute inset-0 rounded-full overflow-hidden"
+        className="absolute inset-[2%] rounded-full"
         style={{
-          background: isHeads 
-            ? `radial-gradient(ellipse 90% 60% at 25% 15%, rgba(255,250,205,0.95) 0%, transparent 30%),
-               radial-gradient(ellipse 70% 50% at 75% 85%, rgba(139,105,20,0.7) 0%, transparent 35%),
-               radial-gradient(ellipse 50% 30% at 50% 50%, rgba(255,223,0,0.3) 0%, transparent 50%),
-               radial-gradient(circle at 50% 50%, #ffd700 0%, #f4c430 15%, #daa520 35%, #cd9b1d 50%, #b8860b 70%, #8b6914 90%, #6b5210 100%)`
-            : `radial-gradient(ellipse 90% 60% at 25% 15%, rgba(200,150,220,0.7) 0%, transparent 30%),
-               radial-gradient(ellipse 70% 50% at 75% 85%, rgba(75,0,130,0.7) 0%, transparent 35%),
-               radial-gradient(ellipse 50% 30% at 50% 50%, rgba(153,50,204,0.3) 0%, transparent 50%),
-               radial-gradient(circle at 50% 50%, #9932CC 0%, #8B2DB2 15%, #7B2795 35%, #6B0B6B 50%, #5B0A5B 70%, #4B0082 90%, #2E0854 100%)`,
+          background: `linear-gradient(145deg, 
+            rgba(255,255,255,0.45) 0%, 
+            rgba(255,255,255,0.15) 25%,
+            transparent 50%, 
+            rgba(0,0,0,0.15) 75%,
+            rgba(0,0,0,0.4) 100%)`,
           boxShadow: `
-            inset 0 12px 50px rgba(255,255,255,0.6),
-            inset 0 -12px 50px rgba(0,0,0,0.5),
-            inset 8px 0 35px rgba(255,255,255,0.2),
-            inset -8px 0 35px rgba(0,0,0,0.35),
-            0 25px 60px -15px rgba(0,0,0,0.5)
-          `,
-          transform: "translateZ(1px)"
+            inset 0 4px 8px rgba(255,255,255,0.5), 
+            inset 0 -4px 8px rgba(0,0,0,0.45)
+          `
+        }}
+      />
+
+      {/* Inner recessed area */}
+      <div 
+        className="absolute inset-[8%] rounded-full"
+        style={{
+          background: isHeads
+            ? `radial-gradient(ellipse 75% 50% at 32% 22%, rgba(255,250,205,0.85) 0%, transparent 38%),
+               radial-gradient(ellipse 55% 38% at 68% 78%, rgba(120,90,15,0.45) 0%, transparent 32%),
+               radial-gradient(circle at 50% 50%, #ffd700 0%, #f4c430 22%, #daa520 42%, #cd9b1d 60%, #b8860b 78%, #8b6914 100%)`
+            : `radial-gradient(ellipse 75% 50% at 32% 22%, rgba(180,130,200,0.65) 0%, transparent 38%),
+               radial-gradient(ellipse 55% 38% at 68% 78%, rgba(60,0,100,0.45) 0%, transparent 32%),
+               radial-gradient(circle at 50% 50%, #9932CC 0%, #8B2DB2 22%, #7B2795 42%, #6B0B6B 60%, #4B0082 78%, #2E0854 100%)`,
+          boxShadow: `
+            inset 0 8px 28px rgba(255,255,255,0.5),
+            inset 0 -8px 28px rgba(0,0,0,0.45),
+            inset 5px 0 18px rgba(255,255,255,0.12),
+            inset -5px 0 18px rgba(0,0,0,0.28)
+          `
         }}
       >
-        {/* Outer raised rim */}
+        {/* Inner rim detail */}
         <div 
-          className="absolute inset-[2%] rounded-full"
-          style={{
-            background: `linear-gradient(135deg, 
-              rgba(255,255,255,0.4) 0%, 
-              rgba(255,255,255,0.1) 30%,
-              transparent 50%, 
-              rgba(0,0,0,0.1) 70%,
-              rgba(0,0,0,0.35) 100%)`,
+          className="absolute inset-[4%] rounded-full"
+          style={{ 
+            border: `3px solid ${isHeads ? "rgba(160, 120, 30, 0.45)" : "rgba(140, 90, 170, 0.5)"}`,
             boxShadow: `
-              inset 0 3px 6px rgba(255,255,255,0.5), 
-              inset 0 -3px 6px rgba(0,0,0,0.4),
-              0 2px 4px rgba(0,0,0,0.2)
+              inset 0 2px 4px rgba(255,255,255,0.25), 
+              0 2px 4px rgba(0,0,0,0.25)
             `
           }}
         />
 
-        {/* Inner recessed area with depth */}
-        <div 
-          className="absolute inset-[7%] rounded-full"
-          style={{
-            background: isHeads
-              ? `radial-gradient(ellipse 80% 55% at 30% 20%, rgba(255,250,205,0.9) 0%, transparent 35%),
-                 radial-gradient(ellipse 60% 40% at 70% 80%, rgba(139,105,20,0.5) 0%, transparent 35%),
-                 radial-gradient(circle at 50% 50%, #ffd700 0%, #f4c430 20%, #daa520 40%, #cd9b1d 60%, #b8860b 80%, #8b6914 100%)`
-              : `radial-gradient(ellipse 80% 55% at 30% 20%, rgba(180,130,200,0.7) 0%, transparent 35%),
-                 radial-gradient(ellipse 60% 40% at 70% 80%, rgba(75,0,130,0.5) 0%, transparent 35%),
-                 radial-gradient(circle at 50% 50%, #9932CC 0%, #8B2DB2 20%, #7B2795 40%, #6B0B6B 60%, #4B0082 80%, #2E0854 100%)`,
-            boxShadow: `
-              inset 0 6px 20px rgba(255,255,255,0.45),
-              inset 0 -6px 20px rgba(0,0,0,0.4),
-              inset 4px 0 12px rgba(255,255,255,0.15),
-              inset -4px 0 12px rgba(0,0,0,0.25),
-              0 3px 15px rgba(0,0,0,0.25)
-            `
-          }}
-        >
-          {/* Inner decorative rim */}
-          <div 
-            className="absolute inset-[3%] rounded-full"
-            style={{ 
-              border: `2px solid ${isHeads ? "rgba(180, 140, 40, 0.5)" : "rgba(150, 100, 180, 0.5)"}`,
-              boxShadow: `
-                inset 0 1px 3px rgba(255,255,255,0.25), 
-                0 1px 3px rgba(0,0,0,0.25)
-              `
+        {/* CENTER TEXT */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span 
+            className="text-2xl md:text-3xl lg:text-4xl font-black leading-none select-none tracking-tight"
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              color: isHeads ? "#5a4510" : "#FFFFFF",
+              textShadow: isHeads 
+                ? "1px 1px 0 rgba(255,250,205,0.6), 2px 3px 4px rgba(0,0,0,0.35)"
+                : "1px 1px 0 rgba(200,150,220,0.4), 2px 3px 6px rgba(0,0,0,0.6), 0 0 20px rgba(153,50,204,0.3)"
             }}
-          />
-
-          {/* Text with enhanced 3D effect */}
-          <div className="absolute inset-0 flex items-center justify-center flex-col">
-            <span 
-              className={cn(
-                "text-2xl md:text-3xl lg:text-4xl font-black leading-none select-none tracking-tight",
-                !isHeads && "text-white"
-              )}
-              style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                ...(isHeads 
-                  ? {
-                      background: "linear-gradient(180deg, #c9a227 0%, #8b6914 35%, #5a4510 65%, #3d2e08 100%)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                      filter: "drop-shadow(1px 2px 0 rgba(255,250,205,0.5)) drop-shadow(2px 4px 2px rgba(0,0,0,0.4))"
-                    }
-                  : {
-                      textShadow: "1px 2px 0 rgba(255,200,255,0.3), 2px 4px 6px rgba(0,0,0,0.6), 0 0 25px rgba(153,50,204,0.4)"
-                    }
-                )
-              }}
-            >
-              {isHeads ? "HEADS" : "HOLDER"}
-            </span>
-          </div>
-
-          {/* Decorative studs with 3D effect */}
-          {[...Array(16)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full"
-              style={{
-                background: isHeads 
-                  ? "radial-gradient(circle at 25% 25%, #f4c430 0%, #daa520 30%, #8b6914 70%, #5a4510 100%)"
-                  : "radial-gradient(circle at 25% 25%, #B266B2 0%, #9932CC 30%, #6B0B6B 70%, #2E0854 100%)",
-                boxShadow: `
-                  inset 0 1px 3px rgba(255,255,255,0.5), 
-                  inset 0 -1px 2px rgba(0,0,0,0.5), 
-                  0 2px 4px rgba(0,0,0,0.4),
-                  0 0 1px rgba(0,0,0,0.3)
-                `,
-                top: `${50 + 43 * Math.sin((i * Math.PI * 2) / 16)}%`,
-                left: `${50 + 43 * Math.cos((i * Math.PI * 2) / 16)}%`,
-                transform: "translate(-50%, -50%)"
-              }}
-            />
-          ))}
+          >
+            {isHeads ? "HEADS" : "HOLDER"}
+          </span>
         </div>
 
-        {/* Primary highlight arc (top) */}
-        <div 
-          className="absolute top-[3%] left-[15%] right-[15%] h-[18%] rounded-full pointer-events-none"
-          style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.2) 40%, transparent 100%)"
-          }}
-        />
-
-        {/* Secondary highlight (side) */}
-        <div 
-          className="absolute top-[15%] left-[2%] w-[10%] h-[45%] rounded-full pointer-events-none"
-          style={{
-            background: "linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)"
-          }}
-        />
-
-        {/* Bottom shadow curve */}
-        <div 
-          className="absolute bottom-[3%] left-[20%] right-[20%] h-[12%] rounded-full pointer-events-none"
-          style={{
-            background: "linear-gradient(0deg, rgba(0,0,0,0.2) 0%, transparent 100%)"
-          }}
-        />
+        {/* Decorative studs */}
+        {[...Array(16)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full"
+            style={{
+              background: isHeads 
+                ? "radial-gradient(circle at 28% 28%, #f4c430 0%, #daa520 35%, #8b6914 70%, #5a4510 100%)"
+                : "radial-gradient(circle at 28% 28%, #B266B2 0%, #9932CC 35%, #6B0B6B 70%, #2E0854 100%)",
+              boxShadow: `
+                inset 0 1px 3px rgba(255,255,255,0.5), 
+                inset 0 -1px 2px rgba(0,0,0,0.5), 
+                0 2px 4px rgba(0,0,0,0.35)
+              `,
+              top: `${50 + 43 * Math.sin((i * Math.PI * 2) / 16)}%`,
+              left: `${50 + 43 * Math.cos((i * Math.PI * 2) / 16)}%`,
+              transform: "translate(-50%, -50%)"
+            }}
+          />
+        ))}
       </div>
+
+      {/* Top highlight arc */}
+      <div 
+        className="absolute top-[3%] left-[16%] right-[16%] h-[16%] rounded-full pointer-events-none"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 45%, transparent 100%)"
+        }}
+      />
+
+      {/* Side highlight */}
+      <div 
+        className="absolute top-[18%] left-[2%] w-[9%] h-[42%] rounded-full pointer-events-none"
+        style={{
+          background: "linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)"
+        }}
+      />
+
+      {/* Bottom shadow */}
+      <div 
+        className="absolute bottom-[4%] left-[22%] right-[22%] h-[10%] rounded-full pointer-events-none"
+        style={{
+          background: "linear-gradient(0deg, rgba(0,0,0,0.18) 0%, transparent 100%)"
+        }}
+      />
     </div>
   );
 };
@@ -225,7 +167,7 @@ const CasinoCoin = ({ isFlipping, result }: CasinoCoinProps) => {
       {/* Coin container */}
       <div 
         className="relative w-52 h-52 md:w-64 md:h-64 lg:w-72 lg:h-72"
-        style={{ perspective: "1200px" }}
+        style={{ perspective: "1000px" }}
       >
         {/* Particle rings when flipping */}
         {isFlipping && (
@@ -255,7 +197,7 @@ const CasinoCoin = ({ isFlipping, result }: CasinoCoinProps) => {
           <CoinFace type="holder" isBack={true} />
         </div>
 
-        {/* Result glow ring */}
+        {/* Result glow */}
         {result && !isFlipping && (
           <div className={cn(
             "absolute -inset-8 rounded-full blur-2xl animate-pulse pointer-events-none",
@@ -266,7 +208,7 @@ const CasinoCoin = ({ isFlipping, result }: CasinoCoinProps) => {
 
       {/* Ground shadow */}
       <div 
-        className="w-40 h-7 md:w-48 md:h-8 rounded-[50%] bg-black/50 blur-xl mt-10 animate-shadow-pulse"
+        className="w-40 h-6 md:w-48 md:h-7 rounded-[50%] bg-black/50 blur-xl mt-10 animate-shadow-pulse"
       />
       
       {/* Status badge */}
