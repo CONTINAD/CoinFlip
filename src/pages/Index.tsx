@@ -12,6 +12,7 @@ import LiveFeed, { FlipRecord } from "@/components/LiveFeed";
 import Leaderboard, { LeaderboardEntry } from "@/components/Leaderboard";
 import { cn } from "@/lib/utils";
 import coinLogo from "@/assets/coin-logo.png";
+import pumpfunLogo from "@/assets/pumpfun-logo.jpg";
 
 const FLIP_INTERVAL = 120;
 
@@ -25,16 +26,6 @@ const SolanaLogo = ({ className }: { className?: string }) => (
     <path fill="url(#sol-main)" d="M64.6,237.9c2.4-2.4,5.7-3.8,9.2-3.8h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,237.9z"/>
     <path fill="url(#sol-main)" d="M64.6,3.8C67.1,1.4,70.4,0,73.8,0h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,3.8z"/>
     <path fill="url(#sol-main)" d="M333.1,120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8,0-8.7,7-4.6,11.1l62.7,62.7c2.4,2.4,5.7,3.8,9.2,3.8h317.4c5.8,0,8.7-7,4.6-11.1L333.1,120.1z"/>
-  </svg>
-);
-
-// PumpFun Logo Component
-const PumpFunLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 32 32" className={className} fill="none">
-    <circle cx="16" cy="16" r="16" fill="#00D1A7"/>
-    <path d="M10 20V12h4c2.2 0 4 1.8 4 4s-1.8 4-4 4h-4zm2-2h2c1.1 0 2-.9 2-2s-.9-2-2-2h-2v4z" fill="white"/>
-    <circle cx="22" cy="12" r="2" fill="white"/>
-    <path d="M20 16v6h4v-6h-4z" fill="white"/>
   </svg>
 );
 
@@ -206,10 +197,10 @@ const Index = () => {
                 href="#" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#00D1A7]/15 border border-[#00D1A7]/30 hover:bg-[#00D1A7]/25 hover:border-[#00D1A7]/50 transition-all duration-300"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3fc99d]/15 border border-[#3fc99d]/30 hover:bg-[#3fc99d]/25 hover:border-[#3fc99d]/50 transition-all duration-300"
               >
-                <PumpFunLogo className="w-5 h-5" />
-                <span className="text-xs font-bold text-[#00D1A7] hidden sm:inline">Buy</span>
+                <img src={pumpfunLogo} alt="PumpFun" className="w-5 h-5 rounded-full object-cover" />
+                <span className="text-xs font-bold text-[#3fc99d] hidden sm:inline">Buy</span>
               </a>
 
               {/* X (Twitter) Link */}
