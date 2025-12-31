@@ -176,9 +176,8 @@ const Index = () => {
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary border-2 border-background animate-pulse" />
               </div>
               <div>
-                <h1 className="font-display font-bold text-lg tracking-tight flex items-center gap-2">
+                <h1 className="font-display font-bold text-lg tracking-tight">
                   COINFLIP
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/20 font-bold uppercase tracking-wider">Beta</span>
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   Powered by <SolanaLogo className="w-3.5 h-3.5" /> <span className="text-gradient-solana font-medium">Solana</span>
