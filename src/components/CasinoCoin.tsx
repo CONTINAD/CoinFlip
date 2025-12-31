@@ -122,29 +122,34 @@ const CasinoCoin = ({ isFlipping, result }: CasinoCoinProps) => {
                 }}
               />
 
-              {/* Dollar sign with 3D effect */}
+              {/* HEADS / TAILS text with 3D effect */}
               <div className="absolute inset-0 flex items-center justify-center flex-col">
                 <span 
-                  className="text-7xl md:text-8xl lg:text-9xl font-black leading-none select-none"
+                  className={cn(
+                    "text-xl md:text-2xl lg:text-3xl font-black leading-none select-none tracking-tight",
+                    result === "holder" ? "text-transparent" : ""
+                  )}
                   style={{
                     fontFamily: "'Space Grotesk', sans-serif",
-                    background: "linear-gradient(180deg, #a08020 0%, #6b5210 40%, #4a3810 70%, #3d2e08 100%)",
+                    background: result === "holder" 
+                      ? "linear-gradient(180deg, #7c3aed 0%, #5b21b6 40%, #4c1d95 70%, #3b0764 100%)"
+                      : "linear-gradient(180deg, #a08020 0%, #6b5210 40%, #4a3810 70%, #3d2e08 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
                     filter: "drop-shadow(2px 3px 0 rgba(255,250,205,0.4)) drop-shadow(-1px -1px 0 rgba(0,0,0,0.3))"
                   }}
                 >
-                  $
+                  {result === "holder" ? "TAILS" : "HEADS"}
                 </span>
                 <span 
-                  className="text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase select-none -mt-1"
+                  className="text-[7px] md:text-[8px] font-bold tracking-[0.2em] uppercase select-none mt-1"
                   style={{ 
-                    color: "#6b5210",
+                    color: result === "holder" ? "#5b21b6" : "#6b5210",
                     textShadow: "1px 1px 0 rgba(255,250,205,0.3), -0.5px -0.5px 0 rgba(0,0,0,0.2)"
                   }}
                 >
-                  FLIP
+                  {result === "holder" ? "HOLDER" : "BURN"}
                 </span>
               </div>
 
