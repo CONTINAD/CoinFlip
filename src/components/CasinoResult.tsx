@@ -77,7 +77,7 @@ const CasinoResult = ({ result, isVisible, txHash, wallet, amount }: CasinoResul
           {amount && (
             <div className="text-center">
               <p className="text-lg font-bold text-foreground">
-                {amount.toLocaleString()} <span className="text-muted-foreground text-sm font-normal">tokens</span>
+                {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
               </p>
               {!isBurn && wallet && (
                 <p className="text-sm text-muted-foreground mt-1">

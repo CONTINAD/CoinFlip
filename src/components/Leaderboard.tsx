@@ -11,10 +11,10 @@ export interface LeaderboardEntry {
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
-  totalBurned: number;
+  totalBurnedSol: number;
 }
 
-const Leaderboard = ({ entries, totalBurned }: LeaderboardProps) => {
+const Leaderboard = ({ entries, totalBurnedSol }: LeaderboardProps) => {
   const formatWallet = (wallet: string) => {
     return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
   };
@@ -107,9 +107,9 @@ const Leaderboard = ({ entries, totalBurned }: LeaderboardProps) => {
                 </div>
                 <div className="text-right">
                   <span className="font-mono text-sm font-bold text-royal block">
-                    {formatAmount(entry.totalAmount)}
+                    {entry.totalAmount.toFixed(4)}
                   </span>
-                  <span className="text-[9px] text-muted-foreground">tokens won</span>
+                  <span className="text-[9px] text-muted-foreground">SOL won</span>
                 </div>
               </div>
             ))
@@ -139,9 +139,9 @@ const Leaderboard = ({ entries, totalBurned }: LeaderboardProps) => {
               <span className="text-[10px] font-semibold text-ember uppercase tracking-wider">Total Burned</span>
             </div>
             <span className="font-mono text-4xl md:text-5xl font-black text-gradient-ember">
-              {formatAmount(totalBurned)}
+              {totalBurnedSol.toFixed(4)}
             </span>
-            <p className="text-[10px] text-muted-foreground mt-2">tokens removed forever</p>
+            <p className="text-[10px] text-muted-foreground mt-2">SOL burned forever</p>
           </div>
 
           {/* Stats grid */}
@@ -152,9 +152,9 @@ const Leaderboard = ({ entries, totalBurned }: LeaderboardProps) => {
             </div>
             <div className="p-4 rounded-xl bg-muted/20 border border-border/50 text-center">
               <span className="text-2xl font-bold text-foreground block">
-                {entries.length > 0 ? formatAmount(Math.round(totalBurned / Math.max(1, Math.round(entries.reduce((acc, e) => acc + e.totalWins, 0) / 2)))) : '0'}
+                {entries.length > 0 ? (totalBurnedSol / Math.max(1, Math.round(entries.reduce((acc, e) => acc + e.totalWins, 0) / 2))).toFixed(4) : '0'}
               </span>
-              <span className="text-[10px] text-muted-foreground">Avg per Burn</span>
+              <span className="text-[10px] text-muted-foreground">Avg SOL/Burn</span>
             </div>
             <div className="p-4 rounded-xl bg-muted/20 border border-border/50 text-center">
               <span className="text-2xl font-bold text-primary block">50%</span>

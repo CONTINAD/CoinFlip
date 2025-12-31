@@ -2,8 +2,8 @@ import { Flame, Gift, TrendingUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RewardsPanelProps {
-  totalBurned: number;
-  totalToHolders: number;
+  totalBurnedSol: number;
+  totalToHoldersSol: number;
   devRewardsSol: number;
   totalFlips: number;
 }
@@ -21,19 +21,13 @@ const SolanaLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const RewardsPanel = ({ totalBurned, totalToHolders, devRewardsSol, totalFlips }: RewardsPanelProps) => {
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toLocaleString();
-  };
-
+const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalFlips }: RewardsPanelProps) => {
   const stats = [
     {
       icon: Flame,
       label: "Total Burned",
-      value: formatNumber(totalBurned),
-      subValue: "tokens",
+      value: totalBurnedSol.toFixed(4),
+      subValue: "SOL",
       color: "text-ember",
       bgColor: "bg-ember/10",
       borderColor: "border-ember/20",
@@ -43,8 +37,8 @@ const RewardsPanel = ({ totalBurned, totalToHolders, devRewardsSol, totalFlips }
     {
       icon: Gift,
       label: "To Holders",
-      value: formatNumber(totalToHolders),
-      subValue: "tokens",
+      value: totalToHoldersSol.toFixed(4),
+      subValue: "SOL",
       color: "text-royal",
       bgColor: "bg-royal/10",
       borderColor: "border-royal/20",

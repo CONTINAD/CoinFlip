@@ -60,8 +60,8 @@ const Index = () => {
   const [currentAmount, setCurrentAmount] = useState<number | undefined>();
   const [history, setHistory] = useState<FlipRecord[]>([]);
   const [winners, setWinners] = useState<WinnerRecord[]>([]);
-  const [totalBurned, setTotalBurned] = useState(0);
-  const [totalToHolders, setTotalToHolders] = useState(0);
+  const [totalBurnedSol, setTotalBurnedSol] = useState(0);
+  const [totalToHoldersSol, setTotalToHoldersSol] = useState(0);
   const [devRewardsSol, setDevRewardsSol] = useState(0);
   const { toast } = useToast();
 
@@ -100,8 +100,7 @@ const Index = () => {
 
     setTimeout(() => {
       const result = Math.random() > 0.5 ? "burn" : "holder";
-      const amount = Math.floor(Math.random() * 50000) + 10000;
-      const solValue = (Math.random() * 0.5 + 0.1);
+      const solValue = parseFloat((Math.random() * 0.5 + 0.1).toFixed(4));
       const devCutSol = solValue * 0.02;
       const txHash = generateMockTxHash();
       const wallet = result === "holder" ? MOCK_WALLETS[Math.floor(Math.random() * MOCK_WALLETS.length)] : undefined;
@@ -109,7 +108,7 @@ const Index = () => {
       setCurrentResult(result);
       setCurrentTxHash(txHash);
       setCurrentWallet(wallet);
-      setCurrentAmount(amount);
+      setCurrentAmount(solValue);
       setIsFlipping(false);
       setShowResult(true);
 
@@ -124,22 +123,22 @@ const Index = () => {
         id: Date.now(),
         type: result,
         wallet,
-        amount,
+        amount: solValue,
         txHash,
         timestamp: new Date(),
       };
       setWinners((prev) => [...prev, newWinner]);
 
       if (result === "burn") {
-        setTotalBurned((prev) => prev + amount);
+        setTotalBurnedSol((prev) => prev + solValue);
       } else {
-        setTotalToHolders((prev) => prev + amount);
+        setTotalToHoldersSol((prev) => prev + solValue);
       }
       setDevRewardsSol((prev) => prev + devCutSol);
 
       toast({
         title: result === "burn" ? "🔥 Buyback & Burn!" : "🎁 Holder Wins!",
-        description: `${amount.toLocaleString()} tokens ${result === "burn" ? "burned" : "sent to holder"}`,
+        description: `${solValue.toFixed(4)} SOL ${result === "burn" ? "burned" : "sent to holder"}`,
       });
 
       setTimeout(() => {
@@ -159,8 +158,8 @@ const Index = () => {
   const resetHistory = () => {
     setHistory([]);
     setWinners([]);
-    setTotalBurned(0);
-    setTotalToHolders(0);
+    setTotalBurnedSol(0);
+    setTotalToHoldersSol(0);
     setDevRewardsSol(0);
     toast({ title: "Reset complete" });
   };
@@ -245,8 +244,8 @@ const Index = () => {
           {/* Rewards panel */}
           <section className="mb-10">
             <RewardsPanel 
-              totalBurned={totalBurned}
-              totalToHolders={totalToHolders}
+              totalBurnedSol={totalBurnedSol}
+              totalToHoldersSol={totalToHoldersSol}
               devRewardsSol={devRewardsSol}
               totalFlips={history.length}
             />
@@ -328,7 +327,7 @@ const Index = () => {
 
           {/* Leaderboard & Burn Stats */}
           <section className="mb-10">
-            <Leaderboard entries={leaderboardEntries} totalBurned={totalBurned} />
+            <Leaderboard entries={leaderboardEntries} totalBurnedSol={totalBurnedSol} />
           </section>
 
           {/* Winners Panel */}
