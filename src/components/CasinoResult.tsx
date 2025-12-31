@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Flame, Gift, Sparkles, Trophy } from "lucide-react";
+import { Flame, Trophy, Sparkles } from "lucide-react";
 
 interface CasinoResultProps {
   result: "burn" | "holder" | null;
@@ -14,75 +14,73 @@ const CasinoResult = ({ result, isVisible }: CasinoResultProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300" />
+      <div className="absolute inset-0 bg-background/85 backdrop-blur-sm animate-in fade-in duration-200" />
 
       {/* Result card */}
       <div className={cn(
         "relative animate-slide-up",
-        "casino-card rounded-3xl px-12 py-10 border-2 max-w-md mx-4",
+        "stake-card-elevated rounded-2xl px-10 py-8 border max-w-sm mx-4",
         isBurn 
-          ? "border-ember/40 glow-ember" 
-          : "border-royal/40 glow-purple"
+          ? "border-ember/30 glow-ember" 
+          : "border-royal/30 glow-purple"
       )}>
-        {/* Top glow bar */}
+        {/* Top accent */}
         <div className={cn(
-          "absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 rounded-b-full",
+          "absolute top-0 left-1/2 -translate-x-1/2 w-24 h-0.5 rounded-b-full",
           isBurn 
             ? "bg-gradient-to-r from-transparent via-ember to-transparent"
             : "bg-gradient-to-r from-transparent via-royal to-transparent"
         )} />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center gap-6 text-center">
+        <div className="flex flex-col items-center gap-5 text-center">
           {/* Icon */}
           <div className={cn(
-            "relative w-20 h-20 rounded-2xl flex items-center justify-center",
+            "relative w-16 h-16 rounded-xl flex items-center justify-center",
             isBurn 
-              ? "bg-gradient-to-br from-ember/20 to-flame/10 border border-ember/30"
-              : "bg-gradient-to-br from-royal/20 to-electric/10 border border-royal/30"
+              ? "bg-ember/15 border border-ember/25"
+              : "bg-royal/15 border border-royal/25"
           )}>
-            {/* Floating sparkles */}
             <Sparkles className={cn(
-              "absolute w-5 h-5 -top-2 -right-2 animate-pulse",
-              isBurn ? "text-ember/60" : "text-royal/60"
+              "absolute w-4 h-4 -top-1.5 -right-1.5 animate-pulse",
+              isBurn ? "text-ember/50" : "text-royal/50"
             )} />
             
             {isBurn ? (
-              <Flame className="w-10 h-10 text-ember drop-shadow-lg" />
+              <Flame className="w-8 h-8 text-ember" />
             ) : (
-              <Trophy className="w-10 h-10 text-royal drop-shadow-lg" />
+              <Trophy className="w-8 h-8 text-royal" />
             )}
           </div>
 
-          {/* Title */}
+          {/* Text */}
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
               Result
             </p>
             <h2 className={cn(
-              "font-display text-3xl md:text-4xl font-bold tracking-wide",
+              "text-2xl font-bold tracking-wide",
               isBurn ? "text-gradient-ember" : "text-gradient-purple"
             )}>
-              {isBurn ? "BUYBACK & BURN" : "RANDOM HOLDER"}
+              {isBurn ? "BUYBACK & BURN" : "HOLDER REWARD"}
             </h2>
           </div>
 
           {/* Description */}
-          <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
             {isBurn
-              ? "Tokens purchased from the market will be permanently burned from circulation."
-              : "A lucky holder has been randomly selected to receive the reward!"}
+              ? "Tokens will be purchased and burned permanently."
+              : "A random holder has been selected for the reward!"}
           </p>
 
-          {/* Status badge */}
+          {/* Badge */}
           <div className={cn(
-            "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+            "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
             isBurn 
-              ? "bg-ember/10 text-ember border border-ember/20"
-              : "bg-royal/10 text-royal border border-royal/20"
+              ? "bg-ember/10 text-ember border border-ember/15"
+              : "bg-royal/10 text-royal border border-royal/15"
           )}>
-            <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
-            {isBurn ? "Burning in progress..." : "Reward sending..."}
+            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            Processing...
           </div>
         </div>
       </div>

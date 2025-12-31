@@ -2,57 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 220 20% 4%;
+    --background: 225 25% 3%;
     --foreground: 0 0% 98%;
 
-    --card: 220 18% 7%;
+    --card: 225 22% 5%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 18% 7%;
+    --popover: 225 22% 5%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 142 72% 50%;
-    --primary-foreground: 220 20% 4%;
+    --primary: 145 80% 42%;
+    --primary-foreground: 225 25% 3%;
 
-    --secondary: 220 15% 12%;
+    --secondary: 225 18% 8%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 15% 12%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 225 15% 10%;
+    --muted-foreground: 225 10% 45%;
 
-    --accent: 45 100% 55%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 225 25% 3%;
 
-    --destructive: 0 85% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 15%;
-    --input: 220 15% 12%;
-    --ring: 142 72% 50%;
+    --border: 225 15% 12%;
+    --input: 225 15% 10%;
+    --ring: 145 80% 42%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
 
-    /* Casino color palette */
-    --gold-light: 45 100% 65%;
+    /* Casino palette */
+    --gold-light: 48 100% 67%;
     --gold: 45 100% 50%;
-    --gold-dark: 38 100% 40%;
-    --ember: 16 100% 55%;
-    --flame: 30 100% 50%;
-    --royal-purple: 270 70% 55%;
-    --electric-blue: 210 100% 55%;
-    --neon-cyan: 180 100% 50%;
-    --casino-green: 142 72% 50%;
-    --casino-red: 0 85% 55%;
+    --gold-dark: 40 100% 38%;
+    --ember: 14 100% 57%;
+    --flame: 25 100% 50%;
+    --royal-purple: 265 70% 58%;
+    --electric-blue: 205 100% 55%;
+    --neon-cyan: 175 100% 45%;
 
-    /* Casino surface colors */
-    --surface-1: 220 20% 6%;
-    --surface-2: 220 18% 8%;
-    --surface-3: 220 16% 10%;
-    --surface-4: 220 14% 13%;
+    /* Surfaces */
+    --surface-0: 225 25% 3%;
+    --surface-1: 225 22% 5%;
+    --surface-2: 225 20% 7%;
+    --surface-3: 225 18% 9%;
+    --surface-4: 225 16% 11%;
+    --surface-5: 225 14% 14%;
   }
 }
 
@@ -67,266 +67,214 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
 }
 
 @layer utilities {
-  .font-display {
-    font-family: 'Rajdhani', sans-serif;
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(50 100% 70%) 0%, hsl(45 100% 55%) 50%, hsl(38 100% 45%) 100%);
+    background: linear-gradient(135deg, hsl(48 100% 72%) 0%, hsl(45 100% 55%) 50%, hsl(40 100% 42%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-green {
-    background: linear-gradient(135deg, hsl(145 80% 60%) 0%, hsl(142 72% 50%) 50%, hsl(140 70% 40%) 100%);
+    background: linear-gradient(135deg, hsl(150 85% 55%) 0%, hsl(145 80% 42%) 50%, hsl(142 75% 35%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-ember {
-    background: linear-gradient(135deg, hsl(35 100% 60%) 0%, hsl(16 100% 55%) 50%, hsl(0 90% 50%) 100%);
+    background: linear-gradient(135deg, hsl(30 100% 60%) 0%, hsl(14 100% 57%) 50%, hsl(0 85% 50%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-purple {
-    background: linear-gradient(135deg, hsl(280 100% 75%) 0%, hsl(270 70% 55%) 50%, hsl(260 80% 65%) 100%);
+    background: linear-gradient(135deg, hsl(275 90% 70%) 0%, hsl(265 70% 58%) 50%, hsl(255 75% 65%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Casino card styles */
-  .casino-card {
-    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
-    border: 1px solid hsl(220 15% 15%);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 hsl(220 15% 18% / 0.5);
+  /* Card styles */
+  .stake-card {
+    background: hsl(225 22% 5%);
+    border: 1px solid hsl(225 15% 12%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
-  .casino-card-gold {
-    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
-    border: 1px solid hsl(45 50% 25% / 0.3);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 60px hsl(45 100% 50% / 0.05);
+  .stake-card-elevated {
+    background: linear-gradient(180deg, hsl(225 20% 7%) 0%, hsl(225 22% 5%) 100%);
+    border: 1px solid hsl(225 15% 14%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   }
 
-  .casino-card-green {
-    background: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 20% 6%) 100%);
-    border: 1px solid hsl(142 50% 30% / 0.3);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 40px hsl(142 72% 50% / 0.08);
+  .stake-card-highlight {
+    background: hsl(225 22% 5%);
+    border: 1px solid hsl(145 50% 25% / 0.4);
+    box-shadow: 0 0 40px hsl(145 80% 42% / 0.06);
   }
 
+  /* Glows */
   .glow-green {
-    box-shadow: 0 0 20px hsl(142 72% 50% / 0.3), 0 0 60px hsl(142 72% 50% / 0.15);
+    box-shadow: 0 0 30px hsl(145 80% 42% / 0.25), 0 0 60px hsl(145 80% 42% / 0.1);
   }
 
   .glow-gold {
-    box-shadow: 0 0 30px hsl(45 100% 50% / 0.3), 0 0 80px hsl(45 100% 50% / 0.15);
+    box-shadow: 0 0 40px hsl(45 100% 50% / 0.25), 0 0 80px hsl(45 100% 50% / 0.1);
   }
 
   .glow-ember {
-    box-shadow: 0 0 30px hsl(16 100% 55% / 0.4), 0 0 80px hsl(30 100% 50% / 0.2);
+    box-shadow: 0 0 35px hsl(14 100% 57% / 0.3), 0 0 70px hsl(25 100% 50% / 0.15);
   }
 
   .glow-purple {
-    box-shadow: 0 0 30px hsl(270 70% 55% / 0.4), 0 0 80px hsl(270 70% 55% / 0.2);
+    box-shadow: 0 0 35px hsl(265 70% 58% / 0.3), 0 0 70px hsl(265 70% 58% / 0.15);
   }
 
   .text-glow-green {
-    text-shadow: 0 0 20px hsl(142 72% 50% / 0.5);
+    text-shadow: 0 0 20px hsl(145 80% 42% / 0.6);
   }
 
   .text-glow-gold {
-    text-shadow: 0 0 20px hsl(45 100% 50% / 0.5);
+    text-shadow: 0 0 25px hsl(45 100% 50% / 0.5);
   }
 }
 
-/* 3D Coin flip animation */
+/* 3D Coin flip */
 @keyframes coinFlip3D {
-  0% {
-    transform: rotateY(0deg) rotateX(0deg) scale(1);
-  }
-  10% {
-    transform: rotateY(180deg) rotateX(10deg) scale(1.1);
-  }
-  20% {
-    transform: rotateY(360deg) rotateX(-5deg) scale(1.15);
-  }
-  30% {
-    transform: rotateY(540deg) rotateX(8deg) scale(1.2);
-  }
-  40% {
-    transform: rotateY(720deg) rotateX(-8deg) scale(1.18);
-  }
-  50% {
-    transform: rotateY(900deg) rotateX(5deg) scale(1.15);
-  }
-  60% {
-    transform: rotateY(1080deg) rotateX(-3deg) scale(1.1);
-  }
-  70% {
-    transform: rotateY(1260deg) rotateX(2deg) scale(1.08);
-  }
-  80% {
-    transform: rotateY(1440deg) rotateX(-1deg) scale(1.04);
-  }
-  90% {
-    transform: rotateY(1620deg) rotateX(0deg) scale(1.02);
-  }
-  100% {
-    transform: rotateY(1800deg) rotateX(0deg) scale(1);
-  }
+  0% { transform: rotateY(0deg) rotateX(0deg) scale(1); }
+  10% { transform: rotateY(180deg) rotateX(12deg) scale(1.08); }
+  20% { transform: rotateY(360deg) rotateX(-8deg) scale(1.15); }
+  30% { transform: rotateY(540deg) rotateX(10deg) scale(1.2); }
+  40% { transform: rotateY(720deg) rotateX(-10deg) scale(1.18); }
+  50% { transform: rotateY(900deg) rotateX(6deg) scale(1.15); }
+  60% { transform: rotateY(1080deg) rotateX(-4deg) scale(1.1); }
+  70% { transform: rotateY(1260deg) rotateX(3deg) scale(1.06); }
+  80% { transform: rotateY(1440deg) rotateX(-2deg) scale(1.03); }
+  90% { transform: rotateY(1620deg) rotateX(1deg) scale(1.01); }
+  100% { transform: rotateY(1800deg) rotateX(0deg) scale(1); }
 }
 
 .animate-coin-flip {
   animation: coinFlip3D 2.5s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Idle coin hover */
+/* Idle hover */
 @keyframes coinIdle {
-  0%, 100% {
-    transform: translateY(0) rotateY(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotateY(10deg);
-  }
+  0%, 100% { transform: translateY(0) rotateY(0deg); }
+  50% { transform: translateY(-10px) rotateY(8deg); }
 }
 
 .animate-coin-idle {
-  animation: coinIdle 3s ease-in-out infinite;
+  animation: coinIdle 4s ease-in-out infinite;
 }
 
-/* Shine sweep effect */
+/* Shine sweep */
 @keyframes shineSweep {
-  0% {
-    transform: translateX(-100%) rotate(35deg);
-  }
-  100% {
-    transform: translateX(200%) rotate(35deg);
-  }
+  0% { transform: translateX(-150%) rotate(25deg); }
+  100% { transform: translateX(250%) rotate(25deg); }
 }
 
 .animate-shine {
-  animation: shineSweep 3s ease-in-out infinite;
+  animation: shineSweep 4s ease-in-out infinite;
 }
 
 /* Pulse ring */
 @keyframes pulseRing {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 0.3;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.06); opacity: 0.25; }
 }
 
 .animate-pulse-ring {
-  animation: pulseRing 2s ease-in-out infinite;
+  animation: pulseRing 2.5s ease-in-out infinite;
 }
 
-/* Expand outward */
+/* Expand */
 @keyframes expandOut {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+  0% { transform: scale(0.95); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 .animate-expand {
-  animation: expandOut 1s ease-out infinite;
+  animation: expandOut 1.2s ease-out infinite;
 }
 
-/* Live dot pulse */
+/* Live pulse */
 @keyframes livePulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.85);
-  }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 hsl(145 80% 42% / 0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px hsl(145 80% 42% / 0); }
 }
 
 .animate-live {
-  animation: livePulse 1.5s ease-in-out infinite;
+  animation: livePulse 2s ease-in-out infinite;
 }
 
-/* Result slide in */
-@keyframes slideInUp {
-  0% {
-    transform: translateY(30px) scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+/* Slide up */
+@keyframes slideUp {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 .animate-slide-up {
-  animation: slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideUp 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Timer tick */
-@keyframes timerPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.03);
-  }
-}
-
-.animate-timer-pulse {
-  animation: timerPulse 0.5s ease-in-out;
-}
-
-/* Coin shadow pulse */
+/* Shadow pulse */
 @keyframes shadowPulse {
-  0%, 100% {
-    transform: scaleX(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scaleX(0.85);
-    opacity: 0.15;
-  }
+  0%, 100% { transform: scaleX(1) scaleY(1); opacity: 0.25; }
+  50% { transform: scaleX(0.88) scaleY(0.9); opacity: 0.12; }
 }
 
 .animate-shadow-pulse {
-  animation: shadowPulse 3s ease-in-out infinite;
+  animation: shadowPulse 4s ease-in-out infinite;
 }
 
-/* Scrollbar styling */
+/* Number count up */
+@keyframes countUp {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-count {
+  animation: countUp 0.3s ease-out;
+}
+
+/* Row highlight */
+@keyframes rowHighlight {
+  0% { background: hsl(145 80% 42% / 0.15); }
+  100% { background: transparent; }
+}
+
+.animate-row-highlight {
+  animation: rowHighlight 2s ease-out;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(220 18% 7%);
+  background: hsl(225 22% 5%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(220 15% 20%);
-  border-radius: 2px;
+  background: hsl(225 15% 18%);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(220 15% 30%);
+  background: hsl(225 15% 25%);
 }
