@@ -6,10 +6,8 @@ export const config = {
     rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     tokenMint: process.env.TOKEN_MINT_ADDRESS,
 
-    // Wallets
+    // Creator Wallet (receives fees, performs buyback)
     creatorPrivateKey: process.env.CREATOR_WALLET_PRIVATE_KEY,
-    feeWallet: process.env.FEE_WALLET_ADDRESS,
-    feePrivateKey: process.env.FEE_WALLET_PRIVATE_KEY,
 
     // Server
     port: parseInt(process.env.PORT) || 3000,

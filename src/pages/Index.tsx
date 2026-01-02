@@ -314,17 +314,6 @@ const Index = () => {
                 <XLogo className="w-4 h-4 text-foreground" />
               </a>
 
-              {/* SOL Balance */}
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl glass-premium border border-border/40">
-                <SolanaLogo className="w-4 h-4" />
-                <div className="flex flex-col">
-                  <span className="font-mono text-sm font-bold text-foreground leading-none">
-                    {devRewardsSol.toFixed(4)}
-                  </span>
-                  <span className="text-[8px] text-muted-foreground font-medium">DEV REWARDS</span>
-                </div>
-              </div>
-
               {/* Live indicator */}
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/25">
                 <div className="w-2 h-2 rounded-full bg-primary animate-live" />
