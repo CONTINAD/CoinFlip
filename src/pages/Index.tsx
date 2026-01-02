@@ -66,7 +66,7 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  // Fetch initial stats
+  // Fetch stats and history periodically
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -75,17 +75,49 @@ const Index = () => {
           const data = await res.json();
           setTotalToHoldersSol(data.totalSolDistributed || 0);
           setTotalBurnedSol(data.totalSolBurned || 0);
-          console.log("Stats loaded:", data);
+
+          // Sync History
+          if (data.history && Array.isArray(data.history)) {
+            setHistory((prev) => {
+              // Simple merge: Just take server history as truth for now to force sync
+              // In a real app we might dedupe more carefully, but here "Server is Truth" is safest for "shared view"
+              // Check if new items exist to avoid flickering if possible, but full replace is cleaner for "consistency"
+              // Actually, let's map server history to our FlipRecord shape
+
+              return data.history.map((h: any) => ({
+                id: h.id,
+                result: h.result,
+                timestamp: new Date(h.timestamp)
+              }));
+            });
+
+            // Sync Winners (Derived from history for now, or we could store winners separately in backend)
+            // For now, let's just rebuild winners from the full history to keep it simple and synced
+            const newWinners = data.history.map((h: any) => ({
+              id: h.id,
+              type: h.result,
+              wallet: h.wallet,
+              amount: h.amount,
+              txHash: h.txHash,
+              timestamp: new Date(h.timestamp)
+            }));
+            setWinners(newWinners);
+          }
         }
       } catch (e) {
         console.error("Failed to load stats:", e);
       }
     };
-    fetchStats();
+
+    fetchStats(); // Initial
+    const interval = setInterval(fetchStats, 5000); // Poll every 5s
+    return () => clearInterval(interval);
   }, []);
 
   // Calculate leaderboard entries from winners
   const leaderboardEntries = useMemo((): LeaderboardEntry[] => {
+    // If winners are empty, leaderboard will be empty. 
+    // This relies on the backend history being populated.
     const holderWins = winners.filter(w => w.type === "holder" && w.wallet);
     const walletStats: Record<string, { totalWins: number; totalAmount: number; lastWin: Date }> = {};
 

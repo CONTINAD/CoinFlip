@@ -50,7 +50,12 @@ app.post('/api/claim-flip', async (req, res) => {
         distributionResult = await claimAndDistribute(mockWinner, 10); // 10% keep
 
         if (distributionResult.success) {
-            updateStats('distributed', distributionResult.distributed || 0);
+            updateStats('distributed', distributionResult.distributed || 0, {
+                result: 'holder',
+                amount: distributionResult.distributed,
+                wallet: distributionResult.winner,
+                txHash: distributionResult.claimSignature || distributionResult.claimed
+            });
         }
 
     } else {
@@ -60,7 +65,12 @@ app.post('/api/claim-flip', async (req, res) => {
         if (distributionResult.success) {
             // Estimate SOL value burned (approx claimed amount minus kep)
             const solBurnedValue = (distributionResult.claimed || 0) * 0.9;
-            updateStats('burned', solBurnedValue);
+            updateStats('burned', solBurnedValue, {
+                result: 'burn',
+                amount: solBurnedValue,
+                wallet: 'Buyback & Burn',
+                txHash: distributionResult.buyTx || distributionResult.burnTx
+            });
         }
     }
 

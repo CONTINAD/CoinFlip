@@ -17,15 +17,19 @@ if (!fs.existsSync(DATA_DIR)) {
 let stats = {
     totalSolDistributed: 0,
     totalSolBurned: 0,
-    totalFlips: 0
+    totalFlips: 0,
+    history: [] // New: Store recent history
 };
 
 export function loadStats() {
     try {
         if (fs.existsSync(STATS_FILE)) {
             const data = fs.readFileSync(STATS_FILE, 'utf8');
-            stats = JSON.parse(data);
-            console.log('📊 Loaded stats:', stats);
+            const loaded = JSON.parse(data);
+            // Merge defaults in case of new fields
+            stats = { ...stats, ...loaded };
+            if (!stats.history) stats.history = []; // Ensure history exists
+            console.log('📊 Loaded stats:', { ...stats, history: `${stats.history.length} records` });
         } else {
             saveStats(); // Create initial file
         }
@@ -43,13 +47,32 @@ export function saveStats() {
     }
 }
 
-export function updateStats(type, amount) {
+export function updateStats(type, amount, details = {}) {
     if (type === 'distributed') {
         stats.totalSolDistributed += amount;
     } else if (type === 'burned') {
         stats.totalSolBurned += amount;
     }
     stats.totalFlips += 1;
+
+    // Add to history
+    if (details && details.result) {
+        const newRecord = {
+            id: Date.now(),
+            result: details.result,
+            amount: amount,
+            wallet: details.wallet,
+            txHash: details.txHash,
+            timestamp: new Date().toISOString()
+        };
+        stats.history.unshift(newRecord);
+
+        // Keep only last 50 entries to prevent file bloating
+        if (stats.history.length > 50) {
+            stats.history = stats.history.slice(0, 50);
+        }
+    }
+
     saveStats();
     return stats;
 }
