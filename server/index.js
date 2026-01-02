@@ -1,13 +1,23 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
 import { loadStats, updateStats, getStats } from './services/statsService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React app (dist)
+// Assuming dist is in the root, one level up from server/
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
 
 // Initialize Stats
 loadStats();
@@ -72,6 +82,11 @@ app.post('/api/claim-flip', async (req, res) => {
         // Common
         hops: distributionResult ? distributionResult.hops : []
     });
+});
+
+// All other requests return the index.html from dist
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(config.port, () => {
