@@ -28,6 +28,7 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "Total Burned",
       value: totalBurnedSol.toFixed(4),
       subValue: "SOL",
+      secondaryValue: `≈ ${(totalBurnedSol * 1000000).toLocaleString()} $COINFLIP`,
       color: "text-ember",
       bgColor: "bg-ember/10",
       borderColor: "border-ember/20",
@@ -39,6 +40,7 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "To Holders",
       value: totalToHoldersSol.toFixed(4),
       subValue: "SOL",
+      secondaryValue: `≈ ${(totalToHoldersSol * 1000000).toLocaleString()} $COINFLIP`,
       color: "text-royal",
       bgColor: "bg-royal/10",
       borderColor: "border-royal/20",
@@ -50,6 +52,7 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "Total Flips",
       value: totalFlips.toString(),
       subValue: "rounds",
+      secondaryValue: null,
       color: "text-accent",
       bgColor: "bg-accent/10",
       borderColor: "border-accent/20",
@@ -59,14 +62,14 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
   ];
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col items-center">
       {/* Section header */}
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.15em]">Statistics</span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-4 max-w-3xl w-full">
         {stats.map((stat, index) => (
           <div
             key={stat.label}
@@ -88,8 +91,8 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
               stat.bgColor
             )} style={{ filter: "blur(40px)" }} />
 
-            <div className="relative z-10 p-4 md:p-5">
-              <div className="flex items-center gap-2.5 mb-3">
+            <div className="relative z-10 p-4 md:p-5 text-center">
+              <div className="flex justify-center mb-3">
                 <div className={cn(
                   "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
                   stat.bgColor,
@@ -103,7 +106,7 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
                 {stat.label}
               </p>
 
-              <div className="flex items-baseline gap-1.5">
+              <div className="flex items-baseline justify-center gap-1.5">
                 <span className={cn(
                   "font-mono text-2xl md:text-3xl font-bold tracking-tight transition-all duration-300",
                   stat.color
@@ -114,6 +117,13 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
                   {stat.subValue}
                 </span>
               </div>
+
+              {/* Secondary amount text */}
+              {stat.secondaryValue && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stat.secondaryValue}
+                </p>
+              )}
             </div>
 
             {/* Bottom accent line */}
