@@ -20,19 +20,19 @@ const FLIP_INTERVAL = 120;
 const SolanaLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 397.7 311.7" className={className} fill="currentColor">
     <linearGradient id="sol-main" x1="360.879" y1="351.455" x2="141.213" y2="-69.294" gradientTransform="matrix(1 0 0 -1 0 314)" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stopColor="#00FFA3"/>
-      <stop offset="1" stopColor="#DC1FFF"/>
+      <stop offset="0" stopColor="#00FFA3" />
+      <stop offset="1" stopColor="#DC1FFF" />
     </linearGradient>
-    <path fill="url(#sol-main)" d="M64.6,237.9c2.4-2.4,5.7-3.8,9.2-3.8h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,237.9z"/>
-    <path fill="url(#sol-main)" d="M64.6,3.8C67.1,1.4,70.4,0,73.8,0h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,3.8z"/>
-    <path fill="url(#sol-main)" d="M333.1,120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8,0-8.7,7-4.6,11.1l62.7,62.7c2.4,2.4,5.7,3.8,9.2,3.8h317.4c5.8,0,8.7-7,4.6-11.1L333.1,120.1z"/>
+    <path fill="url(#sol-main)" d="M64.6,237.9c2.4-2.4,5.7-3.8,9.2-3.8h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,237.9z" />
+    <path fill="url(#sol-main)" d="M64.6,3.8C67.1,1.4,70.4,0,73.8,0h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,3.8z" />
+    <path fill="url(#sol-main)" d="M333.1,120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8,0-8.7,7-4.6,11.1l62.7,62.7c2.4,2.4,5.7,3.8,9.2,3.8h317.4c5.8,0,8.7-7,4.6-11.1L333.1,120.1z" />
   </svg>
 );
 
 // X (Twitter) Logo Component
 const XLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
 
@@ -69,7 +69,7 @@ const Index = () => {
   const leaderboardEntries = useMemo((): LeaderboardEntry[] => {
     const holderWins = winners.filter(w => w.type === "holder" && w.wallet);
     const walletStats: Record<string, { totalWins: number; totalAmount: number; lastWin: Date }> = {};
-    
+
     holderWins.forEach(win => {
       const wallet = win.wallet!;
       if (!walletStats[wallet]) {
@@ -91,20 +91,40 @@ const Index = () => {
       .sort((a, b) => b.totalAmount - a.totalAmount);
   }, [winners]);
 
-  const performFlip = useCallback(() => {
+  const performFlip = useCallback(async () => {
     if (isFlipping) return;
 
     setIsFlipping(true);
     setShowResult(false);
     setCurrentResult(null);
 
-    setTimeout(() => {
-      const result = Math.random() > 0.5 ? "burn" : "holder";
-      const solValue = parseFloat((Math.random() * 0.5 + 0.1).toFixed(4));
-      const devCutSol = solValue * 0.02;
-      const txHash = generateMockTxHash();
-      const wallet = result === "holder" ? MOCK_WALLETS[Math.floor(Math.random() * MOCK_WALLETS.length)] : undefined;
-      
+    try {
+      // Prepare UI for flip
+      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2044/2044-preview.mp3"); // Flip sound if available
+      audio.volume = 0.5;
+      audio.play().catch(() => { });
+
+      // Call Backend API
+      const response = await fetch('http://localhost:3000/api/claim-flip', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Flip failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // --- ANIMATION WAIT ---
+      // Basic flip animation duration
+      // We got the result instantly, but we wait for visual flair
+      await new Promise(r => setTimeout(r, 2500));
+
+      const result = data.flipResult; // 'burn' or 'holder'
+      const solValue = parseFloat(data.amount);
+      const txHash = data.claimSignature || data.transferSignature;
+      const wallet = data.winner;
+
       setCurrentResult(result);
       setCurrentTxHash(txHash);
       setCurrentWallet(wallet);
@@ -134,7 +154,8 @@ const Index = () => {
       } else {
         setTotalToHoldersSol((prev) => prev + solValue);
       }
-      setDevRewardsSol((prev) => prev + devCutSol);
+      // Simplified dev reward tracking for now
+      setDevRewardsSol((prev) => prev + (solValue * 0.02));
 
       toast({
         title: result === "burn" ? "🔥 Buyback & Burn!" : "🎁 Holder Wins!",
@@ -144,7 +165,16 @@ const Index = () => {
       setTimeout(() => {
         setShowResult(false);
       }, 3500);
-    }, 2500);
+
+    } catch (error: any) {
+      console.error("Flip failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to perform flip. Is backend running?",
+        variant: "destructive"
+      });
+      setIsFlipping(false);
+    }
   }, [isFlipping, toast]);
 
   const toggleAutoFlip = () => {
@@ -167,9 +197,9 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <CasinoBackground />
-      <CasinoResult 
-        result={currentResult} 
-        isVisible={showResult} 
+      <CasinoResult
+        result={currentResult}
+        isVisible={showResult}
         txHash={currentTxHash}
         wallet={currentWallet}
         amount={currentAmount}
@@ -181,9 +211,9 @@ const Index = () => {
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <img 
-                  src={coinLogo} 
-                  alt="CoinFlip Logo" 
+                <img
+                  src={coinLogo}
+                  alt="CoinFlip Logo"
                   className="w-11 h-11 object-contain drop-shadow-lg"
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary border-2 border-background animate-pulse" />
@@ -197,12 +227,12 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Buy $COINFLIP on PumpFun */}
-              <a 
-                href="#" 
-                target="_blank" 
+              <a
+                href="#"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3fc99d]/15 border border-[#3fc99d]/40 hover:bg-[#3fc99d]/25 hover:border-[#3fc99d]/60 transition-all duration-300"
               >
@@ -211,9 +241,9 @@ const Index = () => {
               </a>
 
               {/* X (Twitter) Link */}
-              <a 
-                href="#" 
-                target="_blank" 
+              <a
+                href="#"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-9 h-9 rounded-xl glass-premium border border-border/40 hover:border-foreground/30 hover:bg-foreground/5 transition-all duration-300"
               >
@@ -243,7 +273,7 @@ const Index = () => {
         <main className="container mx-auto px-4 py-8 max-w-7xl">
           {/* Rewards panel */}
           <section className="mb-10">
-            <RewardsPanel 
+            <RewardsPanel
               totalBurnedSol={totalBurnedSol}
               totalToHoldersSol={totalToHoldersSol}
               devRewardsSol={devRewardsSol}
@@ -267,7 +297,7 @@ const Index = () => {
             {/* Center - Coin & Controls */}
             <div className="flex flex-col items-center gap-8 order-1 lg:order-2 py-4">
               <CasinoCoin isFlipping={isFlipping} result={currentResult} />
-              
+
               {/* Controls */}
               <div className="flex flex-col items-center gap-5">
                 <Button
@@ -287,7 +317,7 @@ const Index = () => {
                   <Zap className="w-5 h-5 mr-2" />
                   {isFlipping ? "Flipping..." : "Flip Now"}
                 </Button>
-                
+
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
@@ -346,7 +376,7 @@ const Index = () => {
                 <span className="text-[10px] text-muted-foreground">Simple, transparent, on-chain</span>
               </div>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-5">
               <div className="group flex gap-4 p-5 rounded-xl bg-gradient-to-br from-ember/10 via-ember/5 to-transparent border border-ember/20 hover:border-ember/40 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-ember/15 flex items-center justify-center shrink-0 border border-ember/20 group-hover:scale-110 transition-transform duration-300">
@@ -359,7 +389,7 @@ const Index = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="group flex gap-4 p-5 rounded-xl bg-gradient-to-br from-royal/10 via-royal/5 to-transparent border border-royal/20 hover:border-royal/40 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-royal/15 flex items-center justify-center shrink-0 border border-royal/20 group-hover:scale-110 transition-transform duration-300">
                   <Gift className="w-6 h-6 text-royal" />

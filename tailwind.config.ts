@@ -86,10 +86,30 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "coin-flip": {
+          "0%": { transform: "rotateY(0)" },
+          "100%": { transform: "rotateY(1440deg)" }, // 4 full spins
+        },
+        "expand": {
+          "0%": { transform: "scale(1)", opacity: "0.8" },
+          "100%": { transform: "scale(2)", opacity: "0" },
+        },
+        "shadow-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.5" },
+          "50%": { transform: "scale(1.2)", opacity: "0.3" },
+        },
+        "live": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "coin-flip": "coin-flip 2s cubic-bezier(0.4, 2.0, 0.2, 1) forwards", // Aggressive ease-out overshoot
+        "expand": "expand 0.8s ease-out infinite",
+        "shadow-pulse": "shadow-pulse 2s ease-in-out infinite",
+        "live": "live 2s ease-in-out infinite",
       },
     },
   },
