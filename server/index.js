@@ -85,7 +85,7 @@ app.post('/api/claim-flip', async (req, res) => {
 });
 
 // All other requests return the index.html from dist
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
