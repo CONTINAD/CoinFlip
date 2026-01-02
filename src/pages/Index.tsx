@@ -70,7 +70,7 @@ const Index = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/stats');
+        const res = await fetch('/api/stats');
         if (res.ok) {
           const data = await res.json();
           setTotalToHoldersSol(data.totalSolDistributed || 0);
@@ -126,7 +126,7 @@ const Index = () => {
       // Call Backend API
       // We start the call immediately but don't wait for it to finish the *animation* yet
       // Actually, we want the result to determine the coin side.
-      const response = await fetch('http://localhost:3000/api/claim-flip', {
+      const response = await fetch('/api/claim-flip', {
         method: 'POST',
       });
 
