@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +63,26 @@ const Index = () => {
   const [totalBurnedSol, setTotalBurnedSol] = useState(0);
   const [totalToHoldersSol, setTotalToHoldersSol] = useState(0);
   const [devRewardsSol, setDevRewardsSol] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  // Fetch initial stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setTotalToHoldersSol(data.totalSolDistributed || 0);
+          setTotalBurnedSol(data.totalSolBurned || 0);
+          console.log("Stats loaded:", data);
+        }
+      } catch (e) {
+        console.error("Failed to load stats:", e);
+      }
+    };
+    fetchStats();
+  }, []);
 
   // Calculate leaderboard entries from winners
   const leaderboardEntries = useMemo((): LeaderboardEntry[] => {
@@ -92,7 +111,7 @@ const Index = () => {
   }, [winners]);
 
   const performFlip = useCallback(async () => {
-    if (isFlipping) return;
+    if (isFlipping || isProcessing) return;
 
     setIsFlipping(true);
     setShowResult(false);
@@ -105,6 +124,8 @@ const Index = () => {
       audio.play().catch(() => { });
 
       // Call Backend API
+      // We start the call immediately but don't wait for it to finish the *animation* yet
+      // Actually, we want the result to determine the coin side.
       const response = await fetch('http://localhost:3000/api/claim-flip', {
         method: 'POST',
       });
@@ -116,20 +137,29 @@ const Index = () => {
       const data = await response.json();
 
       // --- ANIMATION WAIT ---
-      // Basic flip animation duration
-      // We got the result instantly, but we wait for visual flair
-      await new Promise(r => setTimeout(r, 2500));
+      // Coin is spinning...
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Coin lands -> Now "Processing..." logic
+      setIsFlipping(false); // Stop spinning
+      setIsProcessing(true); // Show "Processing..."
+
+      // Simulate a small delay for "Processing on Chain" feel or if we wanted to wait for signature confirmation logic here
+      // The backend actually already waited for confirmed signatures.
+      // But user wants to SEE "Processing..." specifically.
+      await new Promise(r => setTimeout(r, 1500));
+
+      setIsProcessing(false);
 
       const result = data.flipResult; // 'burn' or 'holder'
       const solValue = parseFloat(data.amount);
-      const txHash = data.claimSignature || data.transferSignature;
+      const txHash = data.claimSignature || data.transferSignature || data.buyTx; // Prioritize relevant tx
       const wallet = data.winner;
 
       setCurrentResult(result);
       setCurrentTxHash(txHash);
       setCurrentWallet(wallet);
       setCurrentAmount(solValue);
-      setIsFlipping(false);
       setShowResult(true);
 
       const newRecord: FlipRecord = {
@@ -164,7 +194,7 @@ const Index = () => {
 
       setTimeout(() => {
         setShowResult(false);
-      }, 3500);
+      }, 5000); // Give them time to click the link
 
     } catch (error: any) {
       console.error("Flip failed:", error);
@@ -174,8 +204,9 @@ const Index = () => {
         variant: "destructive"
       });
       setIsFlipping(false);
+      setIsProcessing(false);
     }
-  }, [isFlipping, toast]);
+  }, [isFlipping, isProcessing, toast]);
 
   const toggleAutoFlip = () => {
     setIsRunning((prev) => !prev);
@@ -199,10 +230,11 @@ const Index = () => {
       <CasinoBackground />
       <CasinoResult
         result={currentResult}
-        isVisible={showResult}
+        isVisible={showResult || isProcessing} // Show if result is ready OR we are processing
         txHash={currentTxHash}
         wallet={currentWallet}
         amount={currentAmount}
+        isProcessing={isProcessing}
       />
 
       <div className="relative z-10">
@@ -302,7 +334,7 @@ const Index = () => {
               <div className="flex flex-col items-center gap-5">
                 <Button
                   onClick={performFlip}
-                  disabled={isFlipping}
+                  disabled={isFlipping || isProcessing}
                   className={cn(
                     "min-w-[200px] h-14 px-10",
                     "bg-gradient-to-r from-primary via-[#0ea87a] to-primary bg-[length:200%_100%]",
@@ -315,7 +347,7 @@ const Index = () => {
                   )}
                 >
                   <Zap className="w-5 h-5 mr-2" />
-                  {isFlipping ? "Flipping..." : "Flip Now"}
+                  {isFlipping ? "Flipping..." : isProcessing ? "Processing..." : "Flip Now"}
                 </Button>
 
                 <div className="flex gap-3">

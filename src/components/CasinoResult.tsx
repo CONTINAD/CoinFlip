@@ -7,10 +7,18 @@ interface CasinoResultProps {
   txHash?: string;
   wallet?: string;
   amount?: number;
+  isProcessing?: boolean;
 }
 
-const CasinoResult = ({ result, isVisible, txHash, wallet, amount }: CasinoResultProps) => {
-  if (!isVisible || !result) return null;
+const CasinoResult = ({ result, isVisible, txHash, wallet, amount, isProcessing = false }: CasinoResultProps) => {
+  if (!isVisible && !isProcessing) return null;
+  // If processing, we might not have a result yet, or we assume the result type if passed. 
+  // But logically index passes "showResult" only after processing? 
+  // No, user wants it to show "Processing" *after* lands. 
+  // So Index.tsx should set isVisible=true AND isProcessing=true initially. 
+  // Let's rely on the props passed from parent.
+
+  if (!isVisible) return null;
 
   const isBurn = result === "burn";
   const solscanUrl = txHash ? `https://solscan.io/tx/${txHash}` : "#";
@@ -28,100 +36,110 @@ const CasinoResult = ({ result, isVisible, txHash, wallet, amount }: CasinoResul
       <div className={cn(
         "relative animate-slide-up pointer-events-auto",
         "stake-card-elevated rounded-2xl px-10 py-8 border max-w-sm mx-4",
-        isBurn 
-          ? "border-ember/30 glow-ember" 
+        isBurn
+          ? "border-ember/30 glow-ember"
           : "border-royal/30 glow-purple"
       )}>
         {/* Top accent */}
         <div className={cn(
           "absolute top-0 left-1/2 -translate-x-1/2 w-24 h-0.5 rounded-b-full",
-          isBurn 
+          isBurn
             ? "bg-gradient-to-r from-transparent via-ember to-transparent"
             : "bg-gradient-to-r from-transparent via-royal to-transparent"
         )} />
 
         <div className="flex flex-col items-center gap-5 text-center">
-          {/* Icon */}
-          <div className={cn(
-            "relative w-16 h-16 rounded-xl flex items-center justify-center",
-            isBurn 
-              ? "bg-ember/15 border border-ember/25"
-              : "bg-royal/15 border border-royal/25"
-          )}>
-            <Sparkles className={cn(
-              "absolute w-4 h-4 -top-1.5 -right-1.5 animate-pulse",
-              isBurn ? "text-ember/50" : "text-royal/50"
-            )} />
-            
-            {isBurn ? (
-              <Flame className="w-8 h-8 text-ember" />
-            ) : (
-              <Trophy className="w-8 h-8 text-royal" />
-            )}
-          </div>
 
-          {/* Text */}
-          <div>
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
-              Result
-            </p>
-            <h2 className={cn(
-              "text-2xl font-bold tracking-wide",
-              isBurn ? "text-gradient-ember" : "text-gradient-purple"
-            )}>
-              {isBurn ? "BUYBACK & BURN" : "HOLDER REWARD"}
-            </h2>
-          </div>
+          {isProcessing ? (
+            /* PROCESSING STATE */
+            <>
+              <div className={cn(
+                "relative w-16 h-16 rounded-xl flex items-center justify-center animate-pulse",
+                isBurn ? "bg-ember/15 border border-ember/25" : "bg-royal/15 border border-royal/25"
+              )}>
+                <Sparkles className={cn("w-8 h-8 animate-spin", isBurn ? "text-ember" : "text-royal")} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-wide text-foreground">Processing...</h2>
+                <p className="text-sm text-muted-foreground mt-2">Verifying transaction on-chain</p>
+              </div>
+            </>
+          ) : (
+            /* RESULT STATE */
+            <>
+              {/* Icon */}
+              <div className={cn(
+                "relative w-16 h-16 rounded-xl flex items-center justify-center",
+                isBurn
+                  ? "bg-ember/15 border border-ember/25"
+                  : "bg-royal/15 border border-royal/25"
+              )}>
+                <Sparkles className={cn(
+                  "absolute w-4 h-4 -top-1.5 -right-1.5 animate-pulse",
+                  isBurn ? "text-ember/50" : "text-royal/50"
+                )} />
 
-          {/* Amount & Wallet Info */}
-          {amount && (
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">
-                {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
-              </p>
-              {!isBurn && wallet && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Sent to <span className="font-mono text-foreground">{formatWallet(wallet)}</span>
+                {isBurn ? (
+                  <Flame className="w-8 h-8 text-ember" />
+                ) : (
+                  <Trophy className="w-8 h-8 text-royal" />
+                )}
+              </div>
+
+              {/* Text */}
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
+                  Result
                 </p>
+                <h2 className={cn(
+                  "text-2xl font-bold tracking-wide",
+                  isBurn ? "text-gradient-ember" : "text-gradient-purple"
+                )}>
+                  {isBurn ? "BUYBACK & BURN" : "HOLDER REWARD"}
+                </h2>
+              </div>
+
+              {/* Amount & Wallet Info */}
+              {amount && (
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground">
+                    {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
+                  </p>
+                  {!isBurn && wallet && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Sent to <span className="font-mono text-foreground">{formatWallet(wallet)}</span>
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
+
+              {/* Description */}
+              <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
+                {isBurn
+                  ? "Tokens will be purchased and burned permanently."
+                  : "A random holder has been selected for the reward!"}
+              </p>
+
+              {/* View on Solscan button */}
+              {txHash && (
+                <a
+                  href={solscanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
+                    isBurn
+                      ? "bg-ember/15 text-ember border border-ember/25 hover:bg-ember/25 hover:border-ember/40"
+                      : "bg-royal/15 text-royal border border-royal/25 hover:bg-royal/25 hover:border-royal/40"
+                  )}
+                >
+                  <span>View on Solscan</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </>
           )}
 
-          {/* Description */}
-          <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
-            {isBurn
-              ? "Tokens will be purchased and burned permanently."
-              : "A random holder has been selected for the reward!"}
-          </p>
-
-          {/* View on Solscan button */}
-          {txHash && (
-            <a
-              href={solscanUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
-                isBurn 
-                  ? "bg-ember/15 text-ember border border-ember/25 hover:bg-ember/25 hover:border-ember/40"
-                  : "bg-royal/15 text-royal border border-royal/25 hover:bg-royal/25 hover:border-royal/40"
-              )}
-            >
-              <span>View on Solscan</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
-
-          {/* Processing Badge */}
-          <div className={cn(
-            "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
-            isBurn 
-              ? "bg-ember/10 text-ember border border-ember/15"
-              : "bg-royal/10 text-royal border border-royal/15"
-          )}>
-            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-            Processing...
-          </div>
         </div>
       </div>
     </div>
