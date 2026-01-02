@@ -28,7 +28,6 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "Total Burned",
       value: totalBurnedSol.toFixed(4),
       subValue: "SOL",
-      secondaryValue: `≈ ${(totalBurnedSol * 1000000).toLocaleString()} $COINFLIP`,
       color: "text-ember",
       bgColor: "bg-ember/10",
       borderColor: "border-ember/20",
@@ -40,7 +39,6 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "To Holders",
       value: totalToHoldersSol.toFixed(4),
       subValue: "SOL",
-      secondaryValue: `≈ ${(totalToHoldersSol * 1000000).toLocaleString()} $COINFLIP`,
       color: "text-royal",
       bgColor: "bg-royal/10",
       borderColor: "border-royal/20",
@@ -52,7 +50,6 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
       label: "Total Flips",
       value: totalFlips.toString(),
       subValue: "rounds",
-      secondaryValue: null,
       color: "text-accent",
       bgColor: "bg-accent/10",
       borderColor: "border-accent/20",
@@ -117,13 +114,6 @@ const RewardsPanel = ({ totalBurnedSol, totalToHoldersSol, devRewardsSol, totalF
                   {stat.subValue}
                 </span>
               </div>
-
-              {/* Secondary amount text */}
-              {stat.secondaryValue && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stat.secondaryValue}
-                </p>
-              )}
             </div>
 
             {/* Bottom accent line */}
