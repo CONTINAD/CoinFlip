@@ -4,7 +4,9 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, '../data');
+
+// Use environment variable for data directory (for Railway Volume), or default to local
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 
 // Ensure data directory exists
