@@ -74,7 +74,9 @@ const Index = () => {
     isBusyRef.current = isFlipping || isProcessing;
   }, [isFlipping, isProcessing]);
 
-  const [tokenMint, setTokenMint] = useState<string>("");
+  // Hardcode fallback mint to ensure Buy button always works
+  const FALLBACK_MINT = "BtPLykqFUW7pBnEWwRSnxiCd7NTq8McoC741bURhpump";
+  const [tokenMint, setTokenMint] = useState<string>(FALLBACK_MINT);
 
   // Fetch stats and history periodically
   useEffect(() => {
@@ -346,7 +348,7 @@ const Index = () => {
                 <img
                   src={coinLogo}
                   alt="$COINFLIP Logo"
-                  className="w-11 h-11 object-contain drop-shadow-lg"
+                  className="w-11 h-11 object-contain drop-shadow-lg rounded-full"
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary border-2 border-background animate-pulse" />
               </div>
