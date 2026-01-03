@@ -14,11 +14,15 @@ if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+// Flip interval in seconds (should match frontend FLIP_INTERVAL)
+const FLIP_INTERVAL = 120;
+
 let stats = {
     totalSolDistributed: 0,
     totalSolBurned: 0,
     totalFlips: 0,
-    history: [] // New: Store recent history
+    history: [],
+    nextFlipTime: null // ISO timestamp for next flip
 };
 
 export function loadStats() {
@@ -78,5 +82,17 @@ export function updateStats(type, amount, details = {}) {
 }
 
 export function getStats() {
+    // If nextFlipTime is in the past or not set, schedule a new one
+    if (!stats.nextFlipTime || new Date(stats.nextFlipTime) < new Date()) {
+        stats.nextFlipTime = new Date(Date.now() + FLIP_INTERVAL * 1000).toISOString();
+        saveStats();
+    }
     return stats;
+}
+
+// Reset the flip timer (called after each flip)
+export function resetFlipTimer() {
+    stats.nextFlipTime = new Date(Date.now() + FLIP_INTERVAL * 1000).toISOString();
+    saveStats();
+    return stats.nextFlipTime;
 }

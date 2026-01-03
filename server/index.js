@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
-import { loadStats, updateStats, getStats } from './services/statsService.js';
+import { loadStats, updateStats, getStats, resetFlipTimer } from './services/statsService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,9 +74,13 @@ app.post('/api/claim-flip', async (req, res) => {
         }
     }
 
+    // Reset the flip timer for all clients
+    const nextFlipTime = resetFlipTimer();
+
     res.json({
         success: true,
         flipResult: result,
+        nextFlipTime: nextFlipTime,
 
         // Holder Params
         amount: distributionResult ? distributionResult.distributed : 0,

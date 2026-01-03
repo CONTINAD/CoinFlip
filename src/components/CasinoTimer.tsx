@@ -4,22 +4,28 @@ import { Clock, Zap } from "lucide-react";
 
 interface CasinoTimerProps {
   seconds: number;
+  timeLeft?: number; // Optional - synced from server
   onComplete: () => void;
   isRunning: boolean;
 }
 
-const CasinoTimer = ({ seconds, onComplete, isRunning }: CasinoTimerProps) => {
-  const [timeLeft, setTimeLeft] = useState(seconds);
+const CasinoTimer = ({ seconds, timeLeft: externalTimeLeft, onComplete, isRunning }: CasinoTimerProps) => {
+  const [internalTimeLeft, setInternalTimeLeft] = useState(seconds);
+
+  // Use external timeLeft if provided, otherwise use internal
+  const timeLeft = externalTimeLeft !== undefined ? externalTimeLeft : internalTimeLeft;
 
   useEffect(() => {
-    setTimeLeft(seconds);
+    setInternalTimeLeft(seconds);
   }, [seconds]);
 
+  // Only run internal countdown if no external timeLeft is provided
   useEffect(() => {
+    if (externalTimeLeft !== undefined) return; // Server manages timing
     if (!isRunning) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
+      setInternalTimeLeft((prev) => {
         if (prev <= 1) {
           onComplete();
           return seconds;
@@ -29,7 +35,7 @@ const CasinoTimer = ({ seconds, onComplete, isRunning }: CasinoTimerProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, seconds, onComplete]);
+  }, [isRunning, seconds, onComplete, externalTimeLeft]);
 
   const minutes = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
@@ -128,10 +134,10 @@ const CasinoTimer = ({ seconds, onComplete, isRunning }: CasinoTimerProps) => {
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className={cn(
                 "font-mono text-3xl font-bold tracking-tight transition-all duration-300",
-                isCritical 
-                  ? "text-primary text-glow-green animate-timer-urgent" 
-                  : isLowTime 
-                    ? "text-primary" 
+                isCritical
+                  ? "text-primary text-glow-green animate-timer-urgent"
+                  : isLowTime
+                    ? "text-primary"
                     : "text-foreground"
               )}>
                 <span>{minutes}</span>

@@ -64,6 +64,7 @@ const Index = () => {
   const [totalToHoldersSol, setTotalToHoldersSol] = useState(0);
   const [devRewardsSol, setDevRewardsSol] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(FLIP_INTERVAL); // Synced from server
   const { toast } = useToast();
 
   // Fetch stats and history periodically
@@ -102,6 +103,13 @@ const Index = () => {
               timestamp: new Date(h.timestamp)
             }));
             setWinners(newWinners);
+          }
+          // Sync timer from server's nextFlipTime
+          if (data.nextFlipTime) {
+            const now = Date.now();
+            const nextFlip = new Date(data.nextFlipTime).getTime();
+            const remaining = Math.max(0, Math.floor((nextFlip - now) / 1000));
+            setTimeLeft(remaining);
           }
         }
       } catch (e) {
@@ -341,6 +349,7 @@ const Index = () => {
               <div className="w-full max-w-[280px]">
                 <CasinoTimer
                   seconds={FLIP_INTERVAL}
+                  timeLeft={timeLeft}
                   onComplete={performFlip}
                   isRunning={isRunning && !isFlipping}
                 />
