@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, Connection } from '@solana/web3.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
 import { initDatabase, updateStats, getStats, resetFlipTimer } from './services/database.js';
 
@@ -140,4 +140,17 @@ app.listen(config.port, () => {
     Stats: 💾 Persisting to server/data/stats.json
     RPC:  ${config.rpcUrl}
     `);
+
+    // Verify RPC Connection immediately
+    (async () => {
+        try {
+            const connection = new Connection(config.rpcUrl, 'confirmed');
+            const version = await connection.getVersion();
+            const slot = await connection.getSlot();
+            console.log(`   ✅ RPC Connection Verified! (Solana Core: ${version['solana-core']} | Slot: ${slot})`);
+        } catch (e) {
+            console.error(`   ❌ RPC Connection FAILED: ${e.message}`);
+            console.error(`      -> Check your SOLANA_RPC_URL variable in Railway.`);
+        }
+    })();
 });
