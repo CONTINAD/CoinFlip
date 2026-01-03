@@ -99,7 +99,7 @@ app.post('/api/claim-flip', async (req, res) => {
     }
 
     // Reset the flip timer for all clients
-    const nextFlipTime = resetFlipTimer();
+    const nextFlipTime = await resetFlipTimer();
 
     res.json({
         success: true,
