@@ -106,7 +106,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
-        claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
+        const claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
         if (claimedSol <= 0.0001) {
             console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL).`);
@@ -435,7 +435,7 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
-        claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
+        const claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
         if (claimedSol <= 0.0001) {
             console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL).`);
