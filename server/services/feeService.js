@@ -178,17 +178,17 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         await new Promise(r => setTimeout(r, 1000));
         const burnWalletBalance = await connection.getBalance(burnWallet.publicKey);
 
-        // Keep 10% of balance as reserve, use 90% for buy (but leave 0.003 for gas/rent)
-        const reserveAmount = (burnWalletBalance / LAMPORTS_PER_SOL) * 0.10;
-        const usableBalance = (burnWalletBalance / LAMPORTS_PER_SOL) - reserveAmount - 0.003;
-        const finalBuyPower = usableBalance > 0 ? usableBalance : 0;
+        // Only use 90% of what we JUST sent for buy
+        // This keeps the initial funding (e.g., 0.1 SOL) as permanent reserve
+        const justReceived = buyAmount - 0.000005; // What we just transferred (minus tx fee)
+        const finalBuyPower = justReceived * 0.90; // Use 90% for buy, 10% stays in wallet
 
-        console.log(`   [Burn Wallet] Balance: ${(burnWalletBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL`);
-        console.log(`   [Burn Wallet] Reserve: ${reserveAmount.toFixed(6)} SOL (10%) | Buy Power: ${finalBuyPower.toFixed(6)} SOL`);
+        console.log(`   [Burn Wallet] Total Balance: ${(burnWalletBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL`);
+        console.log(`   [Burn Wallet] Just Received: ${justReceived.toFixed(6)} SOL | Buy Power: ${finalBuyPower.toFixed(6)} SOL (90%)`);
 
         if (finalBuyPower < 0.001) {
-            console.log('   ⚠️ Burn wallet balance too low for buy');
-            return { success: true, claimed: claimedSol, buyTx: null, burnTx: null, note: 'Burn wallet needs more SOL' };
+            console.log('   ⚠️ Amount too small for buy');
+            return { success: true, claimed: claimedSol, buyTx: null, burnTx: null, note: 'Amount too small for buy' };
         }
 
         // 4. BUY AND BURN
