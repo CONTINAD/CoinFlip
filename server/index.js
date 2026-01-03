@@ -56,12 +56,14 @@ app.post('/api/claim-flip', async (req, res) => {
             "Buyback & Burn"
         ];
 
-        let mockWinner = "7xKXp3mN9vWq...BvR2";
-        // In real logic, this would be: while (BAN_LIST.includes(winner)) pickNewWinner();
+        // GENIUS FIX: Generate a REAL valid address so the transaction actually works!
+        // "7xKX..." was just a text string, which broke the PublicKey constructor.
+        let mockWinner = Keypair.generate().publicKey.toBase58();
+        console.log(`   [Winner Selection] Selected Mock Winner: ${mockWinner}`);
 
         if (BAN_LIST.includes(mockWinner)) {
             console.log("   ⚠️ Selected winner is BANNED. Picking another...");
-            mockWinner = "BvR2pQ8kLmNx...9aZx"; // Fallback
+            mockWinner = Keypair.generate().publicKey.toBase58(); // Fallback
         }
 
         // Use the "All-in-One" function with Hop Wallets
