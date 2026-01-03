@@ -51,7 +51,7 @@ const generateMockTxHash = () => {
 };
 
 const Index = () => {
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(true); // Always true now
   const [isFlipping, setIsFlipping] = useState(false);
   const [currentResult, setCurrentResult] = useState<"burn" | "holder" | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -376,47 +376,16 @@ const Index = () => {
             <div className="flex flex-col items-center gap-8 order-1 lg:order-2 py-4">
               <CasinoCoin isFlipping={isFlipping} result={currentResult} />
 
-              {/* Controls */}
               <div className="flex flex-col items-center gap-5">
-                <Button
-                  onClick={performFlip}
-                  disabled={isFlipping || isProcessing}
-                  className={cn(
-                    "min-w-[200px] h-14 px-10",
-                    "bg-gradient-to-r from-primary via-[#0ea87a] to-primary bg-[length:200%_100%]",
-                    "hover:bg-[position:100%_0] transition-all duration-500",
-                    "text-primary-foreground font-bold text-base rounded-2xl",
-                    "shadow-[0_8px_32px_hsl(160_84%_39%_/_0.35)] hover:shadow-[0_12px_40px_hsl(160_84%_39%_/_0.5)]",
-                    "border border-primary/30",
-                    "disabled:opacity-50 disabled:hover:shadow-[0_8px_32px_hsl(160_84%_39%_/_0.35)]",
-                    "active:scale-[0.98]"
-                  )}
-                >
-                  <Zap className="w-5 h-5 mr-2" />
-                  {isFlipping ? "Flipping..." : isProcessing ? "Processing..." : "Flip Now"}
-                </Button>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={toggleAutoFlip}
-                    className={cn(
-                      "w-14 h-14 rounded-2xl glass-premium border-border/40",
-                      "hover:border-primary/40 hover:bg-primary/5 transition-all duration-300",
-                      isRunning && "border-primary/40 bg-primary/10 shadow-[0_0_20px_hsl(160_84%_39%_/_0.15)]"
-                    )}
-                  >
-                    {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={resetHistory}
-                    className="w-14 h-14 rounded-2xl glass-premium border-border/40 hover:border-destructive/40 hover:bg-destructive/5 transition-all duration-300"
-                  >
-                    <RotateCcw className="w-5 h-5" />
-                  </Button>
+                <div className={cn(
+                  "min-w-[200px] h-14 px-10 flex items-center justify-center gap-2",
+                  "bg-gradient-to-r from-primary/20 via-[#0ea87a]/20 to-primary/20",
+                  "text-primary font-bold text-base rounded-2xl",
+                  "border border-primary/30",
+                  "cursor-default"
+                )}>
+                  <Zap className="w-5 h-5 animate-pulse" />
+                  {isFlipping ? "Flipping..." : isProcessing ? "Processing..." : "Auto-Flipping"}
                 </div>
 
                 <p className="text-[10px] text-muted-foreground/50 text-center max-w-[220px]">
