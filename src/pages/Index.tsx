@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Play, Pause, RotateCcw, Zap, Flame, Gift, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,12 @@ const Index = () => {
   const [timeLeft, setTimeLeft] = useState(FLIP_INTERVAL); // Synced from server
   const { toast } = useToast();
 
+  // Use ref to track busy state inside setInterval closure
+  const isBusyRef = useRef(false);
+  useEffect(() => {
+    isBusyRef.current = isFlipping || isProcessing;
+  }, [isFlipping, isProcessing]);
+
   const [tokenMint, setTokenMint] = useState<string>("");
 
   // Fetch stats and history periodically
@@ -127,8 +133,13 @@ const Index = () => {
           performFlip();
         }
 
-        // T-0 Seconds: Just reset local timer (The API call handles the rest)
+        // T-0 Seconds: Logic to handle reset or hold
         if (prev <= 1) {
+          // KEY FIX: If we are still waiting for API (flipping) or showing result (processing),
+          // HOLD the timer at 0. Do NOT reset until we are done.
+          if (isBusyRef.current) {
+            return 0;
+          }
           return FLIP_INTERVAL;
         }
         return Math.max(0, prev - 1);
