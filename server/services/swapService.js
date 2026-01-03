@@ -55,10 +55,10 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
                         publicKey: payer.publicKey.toBase58(),
                         action: 'buy',
                         mint: config.tokenMint,
-                        amount: amountSol,
+                        amount: amountSol * 0.5, // Use 50% to leave room for TX fees
                         denominatedInSol: 'true',
-                        slippage: 15, // Higher slippage for small amounts
-                        priorityFee: 0.00005, // Lower fee for small buys
+                        slippage: 25, // High slippage for guaranteed execution
+                        priorityFee: 0.00001, // Minimum possible fee
                         pool: 'pump'
                     })
                 });
