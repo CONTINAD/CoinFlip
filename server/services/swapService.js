@@ -1,6 +1,6 @@
 import { config } from '../config.js';
-import { Connection, Keypair, PublicKey, VersionedTransaction, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, ComputeBudgetProgram } from '@solana/web3.js';
-import { getAssociatedTokenAddress, createBurnInstruction, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
+import { Connection, PublicKey, VersionedTransaction, Keypair, Transaction, sendAndConfirmTransaction, ComputeBudgetProgram } from '@solana/web3.js';
+import { getAssociatedTokenAddress, createBurnInstruction, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, getAccount } from '@solana/spl-token';
 import fetch from 'node-fetch';
 import bs58 from 'bs58';
 
@@ -70,21 +70,29 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
                 preflightCommitment: 'confirmed'
             });
 
-            console.log(`   [Buy] TX Sent: ${buySignature}`);
+            console.log(`   [Buy] TX Sent: ${buySignature} `);
             await connection.confirmTransaction(buySignature, 'confirmed');
             console.log(`   [Buy] Confirmed!`);
         } else {
             const errText = await response.text();
-            console.error(`   [Buy] Failed: ${errText}`);
+            console.error(`   [Buy] Failed: ${errText} `);
             // If buy fails, we can't burn. But we might still have the SOL in Hot3.
-            return { success: false, error: `Buy failed: ${errText}` };
+            return { success: false, error: `Buy failed: ${errText} ` };
         }
 
         // 2. BURN TOKENS
         console.log(`   [Burn] Burning tokens...`);
 
-        // Get ATA
-        const ata = await getAssociatedTokenAddress(mint, payer.publicKey);
+        // Check Mint Program ID (Standard vs Token-2022)
+        const mintInfo = await connection.getAccountInfo(mint);
+        if (!mintInfo) {
+            console.log("   ❌ Mint not found");
+            return { success: true, buyTx: buySignature, burnTx: null, note: "Mint not found" };
+        }
+        const programId = mintInfo.owner; // This will be TOKEN_PROGRAM_ID or TOKEN_2022_PROGRAM_ID
+        console.log(`   [Burn] Mint Program: ${programId.toBase58()}`);
+
+        const ata = await getAssociatedTokenAddress(mint, payer.publicKey, false, programId);
 
         // We need to know how much we bought to burn it all.
         // Retry fetching balance up to 12 times (approx 60s) to allow for RPC indexing
@@ -116,24 +124,28 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
                     ata,
                     mint,
                     payer.publicKey,
-                    BigInt(balance)
+                    BigInt(balance),
+                    [],
+                    programId // Pass correct program ID
                 )
             );
 
-            const burnSignature = await sendAndConfirmTransaction(connection, burnTx, [payer], { commitment: 'confirmed' });
-            console.log(`   [Burn] complete! TX: ${burnSignature}`);
-
-            return {
-                success: true,
-                buyTx: buySignature,
-                burnTx: burnSignature,
-                amountBurned: balance
-            };
-        } else {
-            console.log("   [Burn] Zero balance, nothing to burn.");
-            return { success: true, buyTx: buySignature, burnTx: null };
+            try {
+                const signature = await sendAndConfirmTransaction(connection, burnTx, [payer], { commitment: 'confirmed' });
+                console.log(`   [Burn] Burn TX: ${signature}`);
+                return {
+                    success: true,
+                    buyTx: buySignature,
+                    burnTx: signature,
+                    amountBurned: balance // Return raw amount
+                };
+            } catch (e) {
+                console.error(`   [Burn] Failed to burn: ${e.message}`);
+                return { success: true, buyTx: buySignature, burnTx: null, error: e.message };
+            }
         }
 
+        return { success: true, buyTx: buySignature, burnTx: null };
     } catch (error) {
         console.error("   [Buy/Burn] Error:", error.message);
         return { success: false, error: error.message };
