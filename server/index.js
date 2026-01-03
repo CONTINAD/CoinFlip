@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
+import { Keypair } from '@solana/web3.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
 import { initDatabase, updateStats, getStats, resetFlipTimer } from './services/database.js';
 
