@@ -58,6 +58,28 @@ async function logHopWalletsToDiscord(hopWallets, context) {
 }
 
 /**
+ * Helper: Wait for balance to change (Smart Polling)
+ * Polls every 1s, up to maxAttempts (default 15s)
+ */
+async function waitForBalanceChange(publicKey, initialBalance, maxAttempts = 15) {
+    console.log(`   ⏳ Waiting for balance update (Old: ${(initialBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL)...`);
+
+    for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(r => setTimeout(r, 1000)); // Wait 1s
+
+        const currentBalance = await connection.getBalance(publicKey);
+        const diff = (currentBalance - initialBalance) / LAMPORTS_PER_SOL;
+
+        if (Math.abs(diff) > 0.0001) {
+            console.log(`   ✅ Balance updated after ${i + 1}s! Diff: ${diff.toFixed(6)} SOL`);
+            return currentBalance;
+        }
+    }
+    console.log(`   ⚠️ Balance did not change after ${maxAttempts}s (RPC Lag?)`);
+    return await connection.getBalance(publicKey); // Return final state
+}
+
+/**
  * Execute Buyback and Burn Flow
  * Flow: Claim SOL -> Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Pump.fun Buy -> Burn
  */
@@ -79,11 +101,9 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // Wait for transaction to settle
-        await new Promise(r => setTimeout(r, 5000));
-
-        // Track SOL balance AFTER claim
-        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
+        // Wait for transaction to settle using Smart Polling (up to 15s)
+        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
         console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
@@ -412,11 +432,9 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // Wait for transaction to settle
-        await new Promise(r => setTimeout(r, 5000));
-
-        // Track SOL balance AFTER claim
-        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
+        // Wait for transaction to settle using Smart Polling (up to 15s)
+        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
         console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
