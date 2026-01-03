@@ -131,6 +131,17 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
 
         const hop1Amount = buyAmount - TX_FEE;
         const hop2Amount = hop1Amount - TX_FEE;
+        // Safety Check: Ensure we don't spend more than we claimed (minus gas buffer)
+        // If claimedAmount is huge, this is fine. If it's small, we must be careful.
+        // The buyback calculation is strictly based on the delta, so it is safe.
+        // We implicitly assume base wallet has enough for gas (0.005 SOL buffer elsewhere).
+
+        console.log(`   [Calculation] Claimed: ${claimedSol.toFixed(6)} | Keep: ${keepAmount.toFixed(6)} | Buyback: ${buyAmount.toFixed(6)}`);
+
+        if (buyAmount <= 0.002) {
+            console.log("   ⚠️ Amount too small for buyback after gas fees");
+            return { success: true, type: 'burn', claimed: claimedSol, burnedAmount: 0, note: "Skipped (dust)" };
+        }
         const hop3Amount = hop2Amount - TX_FEE;
         const finalBuyPower = hop3Amount - GAS_RESERVE;
 
@@ -166,6 +177,28 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
 
         // 4. BUY AND BURN
         const burnResult = await buyAndBurn(hop3, finalBuyPower);
+
+        // Log success to Discord
+        if (burnResult.success) {
+            const successEmbed = {
+                title: `🔥 Buyback & Burn Executed!`,
+                color: 0xff4500, // Orange-Red
+                fields: [
+                    { name: '💰 Claimed', value: `${claimedSol.toFixed(4)} SOL`, inline: true },
+                    { name: '🔥 Burned', value: `${burnResult.amountBurned ? (Number(burnResult.amountBurned) / 10 ** 6).toFixed(2) : 'Unknown'} Tokens`, inline: true },
+                    { name: '🔗 Buy TX', value: `[Solscan](https://solscan.io/tx/${burnResult.buyTx})`, inline: false }
+                ]
+            };
+            if (burnResult.burnTx) {
+                successEmbed.fields.push({ name: '🔗 Burn TX', value: `[Solscan](https://solscan.io/tx/${burnResult.burnTx})`, inline: false });
+            }
+
+            await fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [successEmbed] })
+            });
+        }
 
         return {
             success: burnResult.success,
