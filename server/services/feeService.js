@@ -132,7 +132,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${hop3.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
 
         const TX_FEE = 0.000005;
-        const GAS_RESERVE = 0.005;
+        const GAS_RESERVE = 0.0001;
 
         const hop1Amount = buyAmount - TX_FEE;
         const hop2Amount = hop1Amount - TX_FEE;

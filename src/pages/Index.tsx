@@ -128,9 +128,9 @@ const Index = () => {
     // Fluid Countdown (1s)
     const countdownInterval = setInterval(() => {
       setTimeLeft((prev) => {
-        // T-60 Seconds: Trigger the API Call (Pre-Claim) - 1 Minute Mark
+        // T-10 Seconds: Trigger the API Call (Pre-Claim)
         // Use isBusyRef to avoid stale closure (isFlipping/isProcessing are captured at mount)
-        if (prev === 60 && !isBusyRef.current) {
+        if (prev === 10 && !isBusyRef.current) {
           performFlip();
         }
 
