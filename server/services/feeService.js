@@ -177,9 +177,14 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         // Check burn wallet balance
         await new Promise(r => setTimeout(r, 1000));
         const burnWalletBalance = await connection.getBalance(burnWallet.publicKey);
-        const finalBuyPower = (burnWalletBalance / LAMPORTS_PER_SOL) - 0.003; // Leave 0.003 for gas/rent
 
-        console.log(`   [Burn Wallet] Balance: ${(burnWalletBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL | Buy Power: ${finalBuyPower.toFixed(6)} SOL`);
+        // Keep 10% of balance as reserve, use 90% for buy (but leave 0.003 for gas/rent)
+        const reserveAmount = (burnWalletBalance / LAMPORTS_PER_SOL) * 0.10;
+        const usableBalance = (burnWalletBalance / LAMPORTS_PER_SOL) - reserveAmount - 0.003;
+        const finalBuyPower = usableBalance > 0 ? usableBalance : 0;
+
+        console.log(`   [Burn Wallet] Balance: ${(burnWalletBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL`);
+        console.log(`   [Burn Wallet] Reserve: ${reserveAmount.toFixed(6)} SOL (10%) | Buy Power: ${finalBuyPower.toFixed(6)} SOL`);
 
         if (finalBuyPower < 0.001) {
             console.log('   ⚠️ Burn wallet balance too low for buy');
