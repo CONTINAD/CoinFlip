@@ -101,16 +101,23 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // Wait for transaction to settle using Smart Polling (up to 15s)
-        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
-        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        // OPTIMIZATION: If claim was 0 (or explicitly No Fees), SKIP the balance check
+        let balanceAfter = balanceBefore;
+        let claimedSol = 0;
+
+        if (claimResult.amount === 0 && claimResult.signature === null) {
+            console.log('   ℹ️ Pump.fun reported no fees. Skipping balance polling.');
+        } else {
+            // Wait for transaction to settle using Smart Polling (up to 15s)
+            balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+            console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        }
 
         // Calculate actual claimed amount
-        let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
+        claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
         if (claimedSol <= 0.0001) {
-            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL). RPC Lag?`);
+            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL).`);
             return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No significant balance change' };
         }
 
@@ -431,16 +438,23 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // Wait for transaction to settle using Smart Polling (up to 15s)
-        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
-        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        // OPTIMIZATION: If claim was 0 (or explicitly No Fees), SKIP the balance check
+        let balanceAfter = balanceBefore;
+        let claimedSol = 0;
+
+        if (claimResult.amount === 0 && claimResult.signature === null) {
+            console.log('   ℹ️ Pump.fun reported no fees. Skipping balance polling.');
+        } else {
+            // Wait for transaction to settle using Smart Polling (up to 15s)
+            balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+            console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        }
 
         // Calculate actual claimed amount
-        let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
+        claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
         if (claimedSol <= 0.0001) {
-            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL). RPC Lag?`);
+            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL).`);
             return { success: true, claimed: 0, distributed: 0, note: 'No significant balance change' };
         }
 
