@@ -80,7 +80,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         }
 
         // Wait for transaction to settle
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 5000));
 
         // Track SOL balance AFTER claim
         const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
@@ -89,23 +89,10 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
-        // --- LIQUIDITY INJECTION (Keep Protocol Alive) ---
-        if (claimedSol <= 0.001) {
-            console.log('   ⚠️ No new fees claimed.');
-
-            const currentSol = balanceAfter / LAMPORTS_PER_SOL;
-            const RESERVE_BUFFER = 0.02;
-            const FALLBACK_AMOUNT = 0.005;
-
-            if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
-                console.log(`   ✅ Injecting Liquidity for Activity: ${FALLBACK_AMOUNT} SOL`);
-                claimedSol = FALLBACK_AMOUNT;
-            } else {
-                console.log('   ⚠️ Wallet balance too low for injection.');
-                return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees & Low Reserves' };
-            }
+        if (claimedSol <= 0.0001) {
+            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL). RPC Lag?`);
+            return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No significant balance change' };
         }
-        // --------------------------------------------------------
 
         console.log(`   [Actionable Amount] ${claimedSol.toFixed(4)} SOL`);
 
@@ -251,7 +238,7 @@ export async function claimCreatorFees() {
 
         if (response.status !== 200) {
             const errorText = await response.text();
-            console.log('[Pump.fun] No fees to claim or error:', errorText);
+            console.log('[Pump.fun] API RESPONSE:', errorText); // FULL DEBUG LOG
             if (errorText.includes("No fees")) {
                 return { success: true, amount: 0, signature: null };
             }
@@ -426,7 +413,7 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         }
 
         // Wait for transaction to settle
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 5000));
 
         // Track SOL balance AFTER claim
         const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
@@ -435,24 +422,10 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
-        // --- LIQUIDITY INJECTION (Keep Protocol Alive) ---
-        // If no volume (0 fees), authorize small liquidity injection from wallet reserves
-        if (claimedSol <= 0.001) {
-            console.log('   ⚠️ No new fees claimed.');
-
-            const currentSol = balanceAfter / LAMPORTS_PER_SOL;
-            const RESERVE_BUFFER = 0.02;
-            const FALLBACK_AMOUNT = 0.005;
-
-            if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
-                console.log(`   ✅ Injecting Liquidity for Activity: ${FALLBACK_AMOUNT} SOL`);
-                claimedSol = FALLBACK_AMOUNT;
-            } else {
-                console.log('   ⚠️ Wallet balance too low for injection.');
-                return { success: true, claimed: 0, distributed: 0, note: 'No fees & Low Reserves' };
-            }
+        if (claimedSol <= 0.0001) {
+            console.log(`   ⚠️ Balance didn't change enough (${claimedSol.toFixed(6)} SOL). RPC Lag?`);
+            return { success: true, claimed: 0, distributed: 0, note: 'No significant balance change' };
         }
-        // --------------------------------------------------------
 
         console.log(`   [Actionable Amount] ${claimedSol.toFixed(4)} SOL`);
 
