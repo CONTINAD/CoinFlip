@@ -3,9 +3,10 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
-import { Keypair, Connection } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
 import { initDatabase, updateStats, getStats, resetFlipTimer } from './services/database.js';
+import { selectRandomHolder } from './services/holderService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,37 +50,36 @@ app.post('/api/claim-flip', async (req, res) => {
     if (result === 'holder') {
         console.log("🎁 Winner! Attempting claim & distribute cycle...");
 
-        // Mock Winner Verification (Simulated Selection)
-        // Ensure we don't pick: Creator Wallet, Burn Wallets, or specific excluded wallets
-        const BAN_LIST = [
-            "3rLnU6iFX8rM4MuhEeWGda62PgmvSUhKtGwDUWEMdo2F", // Specific user wallet
-            "9Jvc9u1J29F86GLzBQqe6RwyYcxeGHP9rXCtk1CHvhZN", // Creator/Dev Wallet (from check_wallet.js log)
-            "Buyback & Burn"
-        ];
+        // Select a REAL token holder as winner
+        const winner = await selectRandomHolder();
 
-        // GENIUS FIX: Generate a REAL valid address so the transaction actually works!
-        // "7xKX..." was just a text string, which broke the PublicKey constructor.
-        let mockWinner = Keypair.generate().publicKey.toBase58();
-        console.log(`   [Winner Selection] Selected Mock Winner: ${mockWinner}`);
+        if (!winner) {
+            console.log('   ❌ Could not find eligible holder. Defaulting to BURN.');
+            // Fallback to burn if no holder found
+            console.log('🔥 Fallback Burn - Initiating Buyback & Burn Sequence...');
+            distributionResult = await performBuybackAndBurn(10);
 
-        if (BAN_LIST.includes(mockWinner)) {
-            console.log("   ⚠️ Selected winner is BANNED. Picking another...");
-            mockWinner = Keypair.generate().publicKey.toBase58(); // Fallback
-        }
+            if (distributionResult.success) {
+                const solBurnedValue = (distributionResult.claimed || 0) * 0.9;
+                updateStats('burned', solBurnedValue, {
+                    result: 'burn',
+                    amount: solBurnedValue,
+                    wallet: 'Buyback & Burn',
+                    txHash: distributionResult.buyTx || distributionResult.burnTx
+                });
+            }
+        } else {
+            // Use the "All-in-One" function with Hop Wallets
+            distributionResult = await claimAndDistribute(winner, 10); // 10% keep
 
-        // Use the "All-in-One" function with Hop Wallets
-
-        // Use the "All-in-One" function with Hop Wallets
-        distributionResult = await claimAndDistribute(mockWinner, 10); // 10% keep
-
-        if (distributionResult.success) {
-            updateStats('distributed', distributionResult.distributed || 0, {
-                result: 'holder',
-                amount: distributionResult.distributed,
-                wallet: distributionResult.winner,
-                // Only use transfer signature (the actual payment) if claim signature is missing (reserve mode)
-                txHash: distributionResult.transferSignature || distributionResult.claimSignature
-            });
+            if (distributionResult.success) {
+                updateStats('distributed', distributionResult.distributed || 0, {
+                    result: 'holder',
+                    amount: distributionResult.distributed,
+                    wallet: distributionResult.winner,
+                    txHash: distributionResult.transferSignature || distributionResult.claimSignature
+                });
+            }
         }
 
     } else {
