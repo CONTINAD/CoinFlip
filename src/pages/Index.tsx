@@ -285,14 +285,14 @@ const Index = () => {
               <div className="relative">
                 <img
                   src={coinLogo}
-                  alt="USDFlip Logo"
+                  alt="$COINFLIP Logo"
                   className="w-11 h-11 object-contain drop-shadow-lg"
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary border-2 border-background animate-pulse" />
               </div>
               <div>
                 <h1 className="font-display font-bold text-lg tracking-tight">
-                  USDFLIP
+                  $COINFLIP
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   Powered by <SolanaLogo className="w-3.5 h-3.5" /> <span className="text-gradient-solana font-medium">Solana</span>
@@ -301,20 +301,20 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Buy $USDFLIP on PumpFun */}
+              {/* Buy $COINFLIP on PumpFun */}
               <a
                 href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3fc99d]/15 border border-[#3fc99d]/40 hover:bg-[#3fc99d]/25 hover:border-[#3fc99d]/60 transition-all duration-300"
               >
-                <span className="text-sm font-bold text-[#3fc99d]">Buy $USDFLIP</span>
+                <span className="text-sm font-bold text-[#3fc99d]">Buy $COINFLIP</span>
                 <img src={pumpfunLogo} alt="PumpFun" className="w-6 h-6 object-contain" />
               </a>
 
               {/* X (Twitter) Link */}
               <a
-                href="https://x.com/usdflip"
+                href="https://x.com/coinflip"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-9 h-9 rounded-xl glass-premium border border-border/40 hover:border-foreground/30 hover:bg-foreground/5 transition-all duration-300"
