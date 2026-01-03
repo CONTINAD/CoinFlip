@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { claimAndDistribute, performBuybackAndBurn } from './services/feeService.js';
-import { loadStats, updateStats, getStats, resetFlipTimer } from './services/statsService.js';
+import { initDatabase, updateStats, getStats, resetFlipTimer } from './services/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,8 +19,8 @@ app.use(express.json());
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-// Initialize Stats
-loadStats();
+// Initialize Database (async - will fallback to in-memory if no DB)
+initDatabase();
 
 // Status Endpoint
 app.get('/api/status', (req, res) => {
