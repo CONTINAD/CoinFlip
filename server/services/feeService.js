@@ -459,6 +459,7 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
 
     try {
         // Track SOL balance BEFORE claim
+        console.log(`   [Wallet] Using creator: ${creatorKeypair.publicKey.toBase58()}`);
         const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
         console.log(`   [Balance Before] ${(balanceBefore / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
