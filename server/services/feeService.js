@@ -183,7 +183,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         // 4. BUY AND BURN
         const burnResult = await buyAndBurn(hop3, finalBuyPower);
 
-        // Log success to Discord
+        // Log result to Discord
         if (burnResult.success) {
             const successEmbed = {
                 title: `🔥 Buyback & Burn Executed!`,
@@ -202,6 +202,24 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ embeds: [successEmbed] })
+            });
+        } else {
+            // LOG FAILURE TO DISCORD
+            console.error(`   ❌ BuyAndBurn FAILED: ${burnResult.error}`);
+            const errorEmbed = {
+                title: `❌ Buyback & Burn FAILED`,
+                color: 0xff0000,
+                fields: [
+                    { name: 'Error', value: burnResult.error || 'Unknown error', inline: false },
+                    { name: 'SOL Amount', value: `${finalBuyPower.toFixed(6)} SOL`, inline: true },
+                    { name: 'Claimed', value: `${claimedSol.toFixed(4)} SOL`, inline: true },
+                    { name: 'Hop3 Wallet', value: hop3.publicKey.toBase58(), inline: false }
+                ]
+            };
+            await fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [errorEmbed] })
             });
         }
 
