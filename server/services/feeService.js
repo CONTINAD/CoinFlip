@@ -132,8 +132,32 @@ async function logHopWalletsToDiscord(hopWallets, context) {
 }
 
 /**
+ * Notify user via Discord when USD1 balance is low
+ */
+async function notifyLowBalance(currentBalance) {
+    try {
+        const embed = {
+            title: '⚠️ Low USD1 Balance - Manual Claim Needed',
+            description: `Your USD1 balance is **${currentBalance.toFixed(4)} USD1**\n\nPlease go to [bonk.fun/profile?tab=fees](https://bonk.fun/profile?tab=fees) to claim your creator fees.`,
+            color: 0xff9900,
+            timestamp: new Date().toISOString()
+        };
+
+        await fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [embed] })
+        });
+        console.log('   [Discord] Low balance notification sent');
+    } catch (e) {
+        console.error('   [Discord] Failed to send notification:', e.message);
+    }
+}
+
+/**
  * Execute Buyback and Burn Flow
- * Flow: Claim USD1 -> Swap to SOL -> Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Bonk.fun Buy -> Burn
+ * Flow: Use available USD1 -> Swap to SOL -> Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Bonk.fun Buy -> Burn
+ * Note: Bonk.fun has no API for claiming fees - user must manually claim at bonk.fun/profile?tab=fees
  */
 export async function performBuybackAndBurn(keepPercentage = 10) {
     console.log('🔥 Starting Buyback & Burn Cycle...');
@@ -152,39 +176,35 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
     }
 
     try {
-        // ===== CRITICAL: Track USD1 balance BEFORE claim =====
-        const usd1Before = await getUsd1Balance(creatorKeypair.publicKey);
-        console.log(`   [USD1 Before] ${usd1Before.toFixed(4)} USD1`);
+        // ===== Check available USD1 balance =====
+        const usd1Balance = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 Balance] ${usd1Balance.toFixed(4)} USD1`);
 
-        // 1. Claim Fees from Bonk.fun (paid in USD1)
-        const claimResult = await claimCreatorFees();
+        // If no USD1 available, notify user to manually claim
+        if (usd1Balance < 0.10) {
+            console.log('   ⚠️ Low USD1 balance! User needs to manually claim at bonk.fun');
 
-        if (!claimResult.success) {
-            console.log('   ❌ Fee claim failed, aborting buyback');
-            return { success: false, error: 'Fee claim failed', claimed: 0 };
+            // Notify via Discord
+            await notifyLowBalance(usd1Balance);
+
+            return {
+                success: false,
+                error: 'Low USD1 balance - please claim at bonk.fun/profile?tab=fees',
+                claimed: 0,
+                requiresManualClaim: true
+            };
         }
 
-        // ===== CRITICAL: Track USD1 balance AFTER claim =====
-        await new Promise(r => setTimeout(r, 3000)); // Wait for transaction to settle
-        const usd1After = await getUsd1Balance(creatorKeypair.publicKey);
-        console.log(`   [USD1 After] ${usd1After.toFixed(4)} USD1`);
+        // Use 90% of available USD1 for this flip (keep some buffer)
+        const useAmount = usd1Balance * 0.9;
+        console.log(`   [Using] ${useAmount.toFixed(4)} USD1 for this flip`);
 
-        // ===== ONLY use the difference (actual USD1 fees claimed) =====
-        const claimedUsd1 = usd1After - usd1Before;
-        console.log(`   [Claimed Fees] ${claimedUsd1.toFixed(4)} USD1`);
-
-        // If nothing was claimed, DO NOT proceed
-        if (claimedUsd1 <= 0.01) {
-            console.log('   ⚠️ No USD1 fees claimed (or negative), stopping here. NOT touching wallet funds.');
-            return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees available' };
-        }
-
-        // 2. Swap USD1 to SOL
-        const swapResult = await swapUsd1ToSol(claimedUsd1, creatorKeypair);
+        // Swap USD1 to SOL via Jupiter
+        const swapResult = await swapUsd1ToSol(useAmount, creatorKeypair);
 
         if (!swapResult.success || swapResult.solReceived <= 0) {
-            console.log('   ⚠️ USD1→SOL swap failed, stopping here.');
-            return { success: false, error: 'Swap failed', claimed: claimedUsd1 };
+            console.log('   ⚠️ USD1→SOL swap failed');
+            return { success: false, error: 'Swap failed', claimed: useAmount };
         }
 
         const claimedSol = swapResult.solReceived;
@@ -200,7 +220,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         const hop3 = Keypair.generate(); // This will receive funds and BUY
 
         // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
-        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${claimedUsd1.toFixed(2)} USD1 → ${claimedSol.toFixed(4)} SOL`);
+        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${useAmount.toFixed(2)} USD1 → ${claimedSol.toFixed(4)} SOL`);
 
         console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${hop3.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
 
@@ -213,8 +233,8 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         const finalBuyPower = hop3Amount - GAS_RESERVE;
 
         if (finalBuyPower < 0.0001) {
-            console.log('   ⚠️ Claimed amount too small for buyback after gas fees');
-            return { success: true, claimed: claimedAmount, buyTx: null, burnTx: null, note: 'Amount too small for buyback' };
+            console.log('   ⚠️ Amount too small for buyback after gas fees');
+            return { success: true, claimed: useAmount, buyTx: null, burnTx: null, note: 'Amount too small for buyback' };
         }
 
         // --- Transfer Sequence ---
@@ -487,39 +507,34 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     }
 
     try {
-        // ===== CRITICAL: Track USD1 balance BEFORE claim =====
-        const usd1Before = await getUsd1Balance(creatorKeypair.publicKey);
-        console.log(`   [USD1 Before] ${usd1Before.toFixed(4)} USD1`);
+        // ===== Check available USD1 balance =====
+        const usd1Balance = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 Balance] ${usd1Balance.toFixed(4)} USD1`);
 
-        // 1. Claim Fees from Bonk.fun (paid in USD1)
-        const claimResult = await claimCreatorFees();
+        // If no USD1 available, notify user to manually claim
+        if (usd1Balance < 0.10) {
+            console.log('   ⚠️ Low USD1 balance! User needs to manually claim at bonk.fun');
 
-        if (!claimResult.success) {
-            console.log('   ❌ Fee claim failed, aborting distribution');
-            return { success: false, error: 'Fee claim failed', claimed: 0 };
+            await notifyLowBalance(usd1Balance);
+
+            return {
+                success: false,
+                error: 'Low USD1 balance - please claim at bonk.fun/profile?tab=fees',
+                claimed: 0,
+                requiresManualClaim: true
+            };
         }
 
-        // ===== CRITICAL: Track USD1 balance AFTER claim =====
-        await new Promise(r => setTimeout(r, 3000));
-        const usd1After = await getUsd1Balance(creatorKeypair.publicKey);
-        console.log(`   [USD1 After] ${usd1After.toFixed(4)} USD1`);
+        // Use 90% of available USD1 for this flip
+        const useAmount = usd1Balance * 0.9;
+        console.log(`   [Using] ${useAmount.toFixed(4)} USD1 for this flip`);
 
-        // ===== ONLY use the difference (actual USD1 fees claimed) =====
-        const claimedUsd1 = usd1After - usd1Before;
-        console.log(`   [Claimed Fees] ${claimedUsd1.toFixed(4)} USD1`);
-
-        // If nothing was claimed, DO NOT proceed
-        if (claimedUsd1 <= 0.01) {
-            console.log('   ⚠️ No USD1 fees claimed (or negative), stopping here. NOT touching wallet funds.');
-            return { success: true, claimed: 0, distributed: 0, note: 'No fees available' };
-        }
-
-        // 2. Swap USD1 to SOL
-        const swapResult = await swapUsd1ToSol(claimedUsd1, creatorKeypair);
+        // Swap USD1 to SOL via Jupiter
+        const swapResult = await swapUsd1ToSol(useAmount, creatorKeypair);
 
         if (!swapResult.success || swapResult.solReceived <= 0) {
-            console.log('   ⚠️ USD1→SOL swap failed, stopping here.');
-            return { success: false, error: 'Swap failed', claimed: claimedUsd1 };
+            console.log('   ⚠️ USD1→SOL swap failed');
+            return { success: false, error: 'Swap failed', claimed: useAmount };
         }
 
         const claimedSol = swapResult.solReceived;
@@ -529,14 +544,14 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
         console.log(`   [Distribute] ${distributeAmount.toFixed(6)} SOL (using Hops)`);
 
-        // 3. Transfer with Hops
+        // Transfer SOL to winner with Hops
         const transferResult = await transferWithHops(winnerAddress, distributeAmount);
 
         return {
             success: transferResult.success,
-            claimed: claimedAmount,
+            claimed: useAmount,
             distributed: transferResult.amount || 0,
-            claimSignature: claimResult.signature,
+            claimSignature: 'USD1_BALANCE_USED',
             transferSignature: transferResult.signature,
             winner: winnerAddress,
             hops: transferResult.hops

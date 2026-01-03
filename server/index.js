@@ -101,7 +101,7 @@ app.get(/(.*)/, (req, res) => {
 
 app.listen(config.port, () => {
     console.log(`
-    🚀 Coinflip Backend Running on port ${config.port}
+    🚀 USDFlip Backend Running on port ${config.port}
     -------------------------------------------
     Mode: ${config.creatorPrivateKey ? 'LIVE ✅' : 'SIMULATION ⚠️'}
     Bubbles: 🛡️ Protected (2-Hop / 3-Hop)
