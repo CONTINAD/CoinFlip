@@ -83,7 +83,10 @@ app.post('/api/claim-flip', async (req, res) => {
         nextFlipTime: nextFlipTime,
 
         // Holder Params
-        amount: distributionResult ? distributionResult.distributed : 0,
+        amount: result === 'holder'
+            ? (distributionResult ? distributionResult.distributed : 0)
+            : (distributionResult ? (distributionResult.claimed * 0.9) : 0), // For burn, show SOL used (approx)
+
         claimSignature: distributionResult ? (distributionResult.claimSignature || distributionResult.claimed) : null,
         transferSignature: distributionResult ? distributionResult.transferSignature : null,
         winner: distributionResult ? distributionResult.winner : null,
@@ -91,7 +94,7 @@ app.post('/api/claim-flip', async (req, res) => {
         // Burn Params
         buyTx: distributionResult ? distributionResult.buyTx : null,
         burnTx: distributionResult ? distributionResult.burnTx : null,
-        burnedAmount: distributionResult ? distributionResult.burnedAmount : 0,
+        burnedAmount: distributionResult ? distributionResult.burnedAmount : 0, // Raw Token Amount
 
         // Common
         hops: distributionResult ? distributionResult.hops : []

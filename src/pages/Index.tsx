@@ -58,6 +58,7 @@ const Index = () => {
   const [currentTxHash, setCurrentTxHash] = useState<string | undefined>();
   const [currentWallet, setCurrentWallet] = useState<string | undefined>();
   const [currentAmount, setCurrentAmount] = useState<number | undefined>();
+  const [burnedTokenAmount, setBurnedTokenAmount] = useState<number | undefined>();
   const [history, setHistory] = useState<FlipRecord[]>([]);
   const [winners, setWinners] = useState<WinnerRecord[]>([]);
   const [totalBurnedSol, setTotalBurnedSol] = useState(0);
@@ -200,6 +201,13 @@ const Index = () => {
       setCurrentTxHash(txHash);
       setCurrentWallet(wallet);
       setCurrentAmount(solValue);
+      // Hack: Store token amount in a new state or just use the raw data if available
+      // Let's add a state for it
+      if (data.burnedAmount) {
+        setBurnedTokenAmount(Number(data.burnedAmount) / 1000000); // Decimals 6
+      } else {
+        setBurnedTokenAmount(undefined);
+      }
       setShowResult(true);
 
       const newRecord: FlipRecord = {
@@ -270,10 +278,11 @@ const Index = () => {
       <CasinoBackground />
       <CasinoResult
         result={currentResult}
-        isVisible={showResult || isProcessing} // Show if result is ready OR we are processing
+        isVisible={showResult || isProcessing}
         txHash={currentTxHash}
         wallet={currentWallet}
         amount={currentAmount}
+        tokenAmount={burnedTokenAmount}
         isProcessing={isProcessing}
       />
 

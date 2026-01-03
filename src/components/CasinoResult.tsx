@@ -7,16 +7,12 @@ interface CasinoResultProps {
   txHash?: string;
   wallet?: string;
   amount?: number;
+  tokenAmount?: number;
   isProcessing?: boolean;
 }
 
-const CasinoResult = ({ result, isVisible, txHash, wallet, amount, isProcessing = false }: CasinoResultProps) => {
+const CasinoResult = ({ result, isVisible, txHash, wallet, amount, tokenAmount, isProcessing = false }: CasinoResultProps) => {
   if (!isVisible && !isProcessing) return null;
-  // If processing, we might not have a result yet, or we assume the result type if passed. 
-  // But logically index passes "showResult" only after processing? 
-  // No, user wants it to show "Processing" *after* lands. 
-  // So Index.tsx should set isVisible=true AND isProcessing=true initially. 
-  // Let's rely on the props passed from parent.
 
   if (!isVisible) return null;
 
@@ -100,25 +96,37 @@ const CasinoResult = ({ result, isVisible, txHash, wallet, amount, isProcessing 
               </div>
 
               {/* Amount & Wallet Info */}
-              {amount && (
-                <div className="text-center">
-                  <p className="text-lg font-bold text-foreground">
-                    {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
-                  </p>
-                  {!isBurn && wallet && (
+              <div className="text-center">
+                {isBurn ? (
+                  <>
+                    {tokenAmount ? (
+                      <p className="text-lg font-bold text-foreground">
+                        {tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-muted-foreground text-sm font-normal">TOKENS</span>
+                      </p>
+                    ) : amount ? (
+                      <p className="text-lg font-bold text-foreground">
+                        {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
+                      </p>
+                    ) : null}
                     <p className="text-sm text-muted-foreground mt-1">
-                      Sent to <span className="font-mono text-foreground">{formatWallet(wallet)}</span>
+                      Permanently Removed
                     </p>
-                  )}
-                </div>
-              )}
-
-              {/* Description */}
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-[260px]">
-                {isBurn
-                  ? "Tokens will be purchased and burned permanently."
-                  : "A random holder has been selected for the reward!"}
-              </p>
+                  </>
+                ) : (
+                  <>
+                    {amount && (
+                      <p className="text-lg font-bold text-foreground">
+                        {amount.toFixed(4)} <span className="text-muted-foreground text-sm font-normal">SOL</span>
+                      </p>
+                    )}
+                    {wallet && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Sent to <span className="font-mono text-foreground">{formatWallet(wallet)}</span>
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
 
               {/* View on Solscan button */}
               {txHash && (
