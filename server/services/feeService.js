@@ -64,18 +64,7 @@ async function logHopWalletsToDiscord(hopWallets, context) {
 export async function performBuybackAndBurn(keepPercentage = 10) {
     console.log('🔥 Starting Buyback & Burn Cycle...');
 
-    if (!creatorKeypair) {
-        console.log('   ⚠️ No private key - simulating buyback');
-        return {
-            success: true,
-            type: 'burn',
-            claimed: 0.05,
-            burnedAmount: 1000,
-            buyTx: 'SIM_BUY_TX',
-            burnTx: 'SIM_BURN_TX',
-            hops: []
-        };
-    }
+
 
     try {
         // Track SOL balance BEFORE claim
@@ -100,20 +89,20 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
-        // --- RESERVE FALLBACK LOGIC (For Testing/Low Volume) ---
+        // --- LIQUIDITY INJECTION (Keep Protocol Alive) ---
         if (claimedSol <= 0.001) {
             console.log('   ⚠️ No new fees claimed.');
 
             const currentSol = balanceAfter / LAMPORTS_PER_SOL;
-            const RESERVE_BUFFER = 0.02; // Keep at least 0.02 SOL for gas
-            const FALLBACK_AMOUNT = 0.005; // Amount to use per flip if using reserves
+            const RESERVE_BUFFER = 0.02;
+            const FALLBACK_AMOUNT = 0.005;
 
             if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
-                console.log(`   ✅ Using Reserve Funds for Demo/Activity: ${FALLBACK_AMOUNT} SOL`);
+                console.log(`   ✅ Injecting Liquidity for Activity: ${FALLBACK_AMOUNT} SOL`);
                 claimedSol = FALLBACK_AMOUNT;
             } else {
-                console.log('   ⚠️ Wallet balance too low for reserve fallback.');
-                return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees & Low Wallet Balance' };
+                console.log('   ⚠️ Wallet balance too low for injection.');
+                return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees & Low Reserves' };
             }
         }
         // --------------------------------------------------------
@@ -240,12 +229,8 @@ export async function claimCreatorFees() {
     console.log('💸 Claiming creator fees from PumpPortal (Pump.fun)...');
 
     if (!config.tokenMint || !creatorKeypair) {
-        console.log('   ⚠️ Missing config/keypair - simulating fee claim');
-        return {
-            success: true,
-            amount: 0,
-            signature: 'SIMULATED_CLAIM_' + Date.now(),
-        };
+        console.log('   ❌ Missing config/keypair - Cannot Claim');
+        return { success: false, amount: 0, signature: null, error: "Missing Config" };
     }
 
     try {
@@ -425,18 +410,7 @@ async function transferWithHops(winnerAddress, amountSol) {
 export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     console.log('🔄 Starting Claim & Distribute Cycle...');
 
-    if (!creatorKeypair) {
-        console.log('   ⚠️ No private key - simulating claim & distribute');
-        return {
-            success: true,
-            claimed: 0.05,
-            distributed: 0.045,
-            claimSignature: 'SIM_CLAIM',
-            transferSignature: 'SIM_TRANSFER',
-            winner: winnerAddress,
-            hops: []
-        };
-    }
+
 
     try {
         // Track SOL balance BEFORE claim
@@ -461,22 +435,21 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
-        // --- RESERVE FALLBACK LOGIC (For Testing/Low Volume) ---
-        // If we didn't claim anything (no volume), but we have SOL in the wallet, 
-        // use a small amount from reserves to keep the game alive and showing action.
+        // --- LIQUIDITY INJECTION (Keep Protocol Alive) ---
+        // If no volume (0 fees), authorize small liquidity injection from wallet reserves
         if (claimedSol <= 0.001) {
             console.log('   ⚠️ No new fees claimed.');
 
             const currentSol = balanceAfter / LAMPORTS_PER_SOL;
-            const RESERVE_BUFFER = 0.02; // Keep at least 0.02 SOL for gas
-            const FALLBACK_AMOUNT = 0.005; // Amount to use per flip if using reserves
+            const RESERVE_BUFFER = 0.02;
+            const FALLBACK_AMOUNT = 0.005;
 
             if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
-                console.log(`   ✅ Using Reserve Funds for Demo/Activity: ${FALLBACK_AMOUNT} SOL`);
+                console.log(`   ✅ Injecting Liquidity for Activity: ${FALLBACK_AMOUNT} SOL`);
                 claimedSol = FALLBACK_AMOUNT;
             } else {
-                console.log('   ⚠️ Wailet balance too low for reserve fallback.');
-                return { success: true, claimed: 0, distributed: 0, note: 'No fees & Low Wallet Balance' };
+                console.log('   ⚠️ Wallet balance too low for injection.');
+                return { success: true, claimed: 0, distributed: 0, note: 'No fees & Low Reserves' };
             }
         }
         // --------------------------------------------------------

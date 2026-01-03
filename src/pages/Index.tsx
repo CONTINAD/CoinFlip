@@ -122,9 +122,14 @@ const Index = () => {
     // Fluid Countdown (1s)
     const countdownInterval = setInterval(() => {
       setTimeLeft((prev) => {
+        // T-10 Seconds: Trigger the API Call (Pre-Claim)
+        if (prev === 10 && !isFlipping && !isProcessing) {
+          performFlip();
+        }
+
+        // T-0 Seconds: Just reset local timer (The API call handles the rest)
         if (prev <= 1) {
-          performFlip(); // Trigger flip!
-          return FLIP_INTERVAL; // Reset local immediately to avoid double trigger while waiting for server sync
+          return FLIP_INTERVAL;
         }
         return Math.max(0, prev - 1);
       });
@@ -177,9 +182,7 @@ const Index = () => {
       audio.volume = 0.5;
       audio.play().catch(() => { });
 
-      // Call Backend API
-      // We start the call immediately but don't wait for it to finish the *animation* yet
-      // Actually, we want the result to determine the coin side.
+      // Call Backend API (Happens at T-10s)
       const response = await fetch('/api/claim-flip', {
         method: 'POST',
       });
@@ -190,24 +193,32 @@ const Index = () => {
 
       const data = await response.json();
 
-      // --- ANIMATION WAIT ---
-      // Coin is spinning...
-      await new Promise(r => setTimeout(r, 2000));
+      // --- WAIT FOR TIMER TO HIT ZERO ---
+      // We have the data (shit loads), now we wait for the visual countdown.
+      await new Promise<void>((resolve) => {
+        const checkTimer = setInterval(() => {
+          setTimeLeft((current) => {
+            if (current <= 2) { // minimal buffer
+              clearInterval(checkTimer);
+              resolve();
+            }
+            return current; // Don't modify, just read
+          });
+        }, 500);
+      });
 
-      // Coin lands -> Now "Processing..." logic
+      // Coin lands -> Now "Processing..." logic (Visual only, data is ready)
       setIsFlipping(false); // Stop spinning
       setIsProcessing(true); // Show "Processing..."
 
-      // Simulate a small delay for "Processing on Chain" feel or if we wanted to wait for signature confirmation logic here
-      // The backend actually already waited for confirmed signatures.
-      // But user wants to SEE "Processing..." specifically.
-      await new Promise(r => setTimeout(r, 1500));
+      // Small delay for effect
+      await new Promise(r => setTimeout(r, 1000));
 
       setIsProcessing(false);
 
       const result = data.flipResult; // 'burn' or 'holder'
       const solValue = parseFloat(data.amount);
-      const txHash = data.claimSignature || data.transferSignature || data.buyTx; // Prioritize relevant tx
+      const txHash = data.claimSignature || data.transferSignature || data.buyTx;
       const wallet = data.winner;
 
       setCurrentResult(result);
