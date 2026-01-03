@@ -242,7 +242,10 @@ const Index = () => {
 
       const result = data.flipResult; // 'burn' or 'holder'
       const solValue = parseFloat(data.amount);
-      const txHash = data.claimSignature || data.transferSignature || data.buyTx;
+      // Use result-specific TX hash for Solscan
+      const txHash = result === 'burn'
+        ? (data.buyTx || data.burnTx || data.claimSignature)
+        : (data.transferSignature || data.claimSignature);
       const wallet = data.winner;
 
       setCurrentResult(result);
@@ -263,7 +266,7 @@ const Index = () => {
         result,
         timestamp: new Date(),
       };
-      setHistory((prev) => [...prev, newRecord]);
+      setHistory((prev) => [newRecord, ...prev]); // Newest first
 
       const newWinner: WinnerRecord = {
         id: Date.now(),
@@ -273,7 +276,7 @@ const Index = () => {
         txHash,
         timestamp: new Date(),
       };
-      setWinners((prev) => [...prev, newWinner]);
+      setWinners((prev) => [newWinner, ...prev]); // Newest first
 
       if (result === "burn") {
         setTotalBurnedSol((prev) => prev + solValue);

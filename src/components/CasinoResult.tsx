@@ -12,9 +12,8 @@ interface CasinoResultProps {
 }
 
 const CasinoResult = ({ result, isVisible, txHash, wallet, amount, tokenAmount, isProcessing = false }: CasinoResultProps) => {
+  // Show if visible OR processing
   if (!isVisible && !isProcessing) return null;
-
-  if (!isVisible) return null;
 
   const isBurn = result === "burn";
   const solscanUrl = txHash ? `https://solscan.io/tx/${txHash}` : "#";

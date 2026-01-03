@@ -38,46 +38,64 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
         // 1. BUY TOKENS via PumpPortal
         console.log(`   [Buy] Purchasing on Pump.fun...`);
 
+        // PumpPortal Trade API - with RETRY logic (up to 3 attempts)
         let buySignature = null;
-        let boughtAmount = 0; // We need to fetch this or estimate it
+        let buySuccess = false;
 
-        // PumpPortal Trade API for Bonk.fun
-        // "action": "buy"
-        const response = await fetch('https://pumpportal.fun/api/trade-local', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                publicKey: payer.publicKey.toBase58(),
-                action: 'buy',
-                mint: config.tokenMint,
-                amount: amountSol, // SOL amount to spend
-                denominatedInSol: 'true',
-                slippage: 10, // High slippage for guaranteed execution
-                priorityFee: 0.0001,
-                pool: 'pump' // Target Pump.fun pool
-            })
-        });
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            console.log(`   [Buy] Attempt ${attempt}/3...`);
 
-        if (response.status === 200) {
-            const data = await response.arrayBuffer();
-            const tx = VersionedTransaction.deserialize(new Uint8Array(data));
-            tx.sign([payer]);
+            try {
+                const response = await fetch('https://pumpportal.fun/api/trade-local', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        publicKey: payer.publicKey.toBase58(),
+                        action: 'buy',
+                        mint: config.tokenMint,
+                        amount: amountSol,
+                        denominatedInSol: 'true',
+                        slippage: 15, // Higher slippage for small amounts
+                        priorityFee: 0.00005, // Lower fee for small buys
+                        pool: 'pump'
+                    })
+                });
 
-            buySignature = await connection.sendTransaction(tx, {
-                skipPreflight: false,
-                preflightCommitment: 'confirmed'
-            });
+                if (response.status === 200) {
+                    const data = await response.arrayBuffer();
+                    const tx = VersionedTransaction.deserialize(new Uint8Array(data));
+                    tx.sign([payer]);
 
-            console.log(`   [Buy] TX Sent: ${buySignature} `);
-            await connection.confirmTransaction(buySignature, 'confirmed');
-            console.log(`   [Buy] Confirmed!`);
-        } else {
-            const errText = await response.text();
-            console.error(`   [Buy] Failed: ${errText} `);
-            // If buy fails, we can't burn. But we might still have the SOL in Hot3.
-            return { success: false, error: `Buy failed: ${errText} ` };
+                    buySignature = await connection.sendTransaction(tx, {
+                        skipPreflight: false,
+                        preflightCommitment: 'confirmed'
+                    });
+
+                    console.log(`   [Buy] TX Sent: ${buySignature}`);
+                    await connection.confirmTransaction(buySignature, 'confirmed');
+                    console.log(`   [Buy] Confirmed!`);
+                    buySuccess = true;
+                    break; // Success, exit retry loop
+                } else {
+                    const errText = await response.text();
+                    console.error(`   [Buy] Attempt ${attempt} failed: ${errText}`);
+                    if (attempt < 3) {
+                        await new Promise(r => setTimeout(r, 2000)); // Wait 2s before retry
+                    }
+                }
+            } catch (e) {
+                console.error(`   [Buy] Attempt ${attempt} error: ${e.message}`);
+                if (attempt < 3) {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+            }
+        }
+
+        if (!buySuccess) {
+            console.error(`   [Buy] Failed after 3 attempts`);
+            return { success: false, error: 'Buy failed after 3 retries' };
         }
 
         // 2. BURN TOKENS
