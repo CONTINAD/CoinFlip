@@ -101,17 +101,9 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // OPTIMIZATION: If claim was 0 (or explicitly No Fees), SKIP the balance check
-        let balanceAfter = balanceBefore;
-        let claimedSol = 0;
-
-        if (claimResult.amount === 0 && claimResult.signature === null) {
-            console.log('   ℹ️ Pump.fun reported no fees. Skipping balance polling.');
-        } else {
-            // Wait for transaction to settle using Smart Polling (up to 15s)
-            balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
-            console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-        }
+        // Wait for transaction to settle using Smart Polling (up to 15s)
+        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
         claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
@@ -438,17 +430,9 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // OPTIMIZATION: If claim was 0 (or explicitly No Fees), SKIP the balance check
-        let balanceAfter = balanceBefore;
-        let claimedSol = 0;
-
-        if (claimResult.amount === 0 && claimResult.signature === null) {
-            console.log('   ℹ️ Pump.fun reported no fees. Skipping balance polling.');
-        } else {
-            // Wait for transaction to settle using Smart Polling (up to 15s)
-            balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
-            console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-        }
+        // Wait for transaction to settle using Smart Polling (up to 15s)
+        const balanceAfter = await waitForBalanceChange(creatorKeypair.publicKey, balanceBefore);
+        console.log(`   [Balance After] ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // Calculate actual claimed amount
         claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
