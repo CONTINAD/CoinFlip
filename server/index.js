@@ -74,7 +74,8 @@ app.post('/api/claim-flip', async (req, res) => {
                 result: 'holder',
                 amount: distributionResult.distributed,
                 wallet: distributionResult.winner,
-                txHash: distributionResult.claimSignature || distributionResult.claimed
+                // Only use transfer signature (the actual payment) if claim signature is missing (reserve mode)
+                txHash: distributionResult.transferSignature || distributionResult.claimSignature
             });
         }
 
@@ -107,7 +108,8 @@ app.post('/api/claim-flip', async (req, res) => {
             ? (distributionResult ? distributionResult.distributed : 0)
             : (distributionResult ? (distributionResult.claimed * 0.9) : 0), // For burn, show SOL used (approx)
 
-        claimSignature: distributionResult ? (distributionResult.claimSignature || distributionResult.claimed) : null,
+        // FIX: Do NOT fallback to .claimed (amount) for signatures!
+        claimSignature: distributionResult ? distributionResult.claimSignature : null,
         transferSignature: distributionResult ? distributionResult.transferSignature : null,
         winner: distributionResult ? distributionResult.winner : null,
 
