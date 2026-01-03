@@ -100,15 +100,25 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
-        // Handle simulation/small randomness in demo mode if balance didn't change enough
+        // --- RESERVE FALLBACK LOGIC (For Testing/Low Volume) ---
         if (claimedSol <= 0.001) {
-            console.log('   ⚠️ No significant balance change detected (likely 0 fees claimed)');
-            // For strict mode we might stop here, but if we want to force burn from wallet for demo:
-            // claimedSol = 0; 
-            return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees claimed' };
-        }
+            console.log('   ⚠️ No new fees claimed.');
 
-        console.log(`   [Claimed Fees] ${claimedSol.toFixed(4)} SOL`);
+            const currentSol = balanceAfter / LAMPORTS_PER_SOL;
+            const RESERVE_BUFFER = 0.02; // Keep at least 0.02 SOL for gas
+            const FALLBACK_AMOUNT = 0.005; // Amount to use per flip if using reserves
+
+            if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
+                console.log(`   ✅ Using Reserve Funds for Demo/Activity: ${FALLBACK_AMOUNT} SOL`);
+                claimedSol = FALLBACK_AMOUNT;
+            } else {
+                console.log('   ⚠️ Wallet balance too low for reserve fallback.');
+                return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees & Low Wallet Balance' };
+            }
+        }
+        // --------------------------------------------------------
+
+        console.log(`   [Actionable Amount] ${claimedSol.toFixed(4)} SOL`);
 
         const keepAmount = claimedSol * (keepPercentage / 100);
         const buyAmount = claimedSol - keepAmount;
@@ -451,13 +461,27 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         // Calculate actual claimed amount
         let claimedSol = (balanceAfter - balanceBefore) / LAMPORTS_PER_SOL;
 
+        // --- RESERVE FALLBACK LOGIC (For Testing/Low Volume) ---
+        // If we didn't claim anything (no volume), but we have SOL in the wallet, 
+        // use a small amount from reserves to keep the game alive and showing action.
         if (claimedSol <= 0.001) {
-            console.log('   ⚠️ No significant balance change detected (likely 0 fees claimed)');
-            // claimedSol = 0; 
-            return { success: true, claimed: 0, distributed: 0, note: 'No fees claimed' };
-        }
+            console.log('   ⚠️ No new fees claimed.');
 
-        console.log(`   [Claimed Fees] ${claimedSol.toFixed(4)} SOL`);
+            const currentSol = balanceAfter / LAMPORTS_PER_SOL;
+            const RESERVE_BUFFER = 0.02; // Keep at least 0.02 SOL for gas
+            const FALLBACK_AMOUNT = 0.005; // Amount to use per flip if using reserves
+
+            if (currentSol > (RESERVE_BUFFER + FALLBACK_AMOUNT)) {
+                console.log(`   ✅ Using Reserve Funds for Demo/Activity: ${FALLBACK_AMOUNT} SOL`);
+                claimedSol = FALLBACK_AMOUNT;
+            } else {
+                console.log('   ⚠️ Wailet balance too low for reserve fallback.');
+                return { success: true, claimed: 0, distributed: 0, note: 'No fees & Low Wallet Balance' };
+            }
+        }
+        // --------------------------------------------------------
+
+        console.log(`   [Actionable Amount] ${claimedSol.toFixed(4)} SOL`);
 
         const keepAmount = claimedSol * (keepPercentage / 100);
         const distributeAmount = claimedSol - keepAmount;
