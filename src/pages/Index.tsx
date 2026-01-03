@@ -121,7 +121,13 @@ const Index = () => {
 
     // Fluid Countdown (1s)
     const countdownInterval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          performFlip(); // Trigger flip!
+          return FLIP_INTERVAL; // Reset local immediately to avoid double trigger while waiting for server sync
+        }
+        return Math.max(0, prev - 1);
+      });
     }, 1000);
 
     return () => {

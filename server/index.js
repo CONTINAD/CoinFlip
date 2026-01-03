@@ -47,7 +47,24 @@ app.post('/api/claim-flip', async (req, res) => {
 
     if (result === 'holder') {
         console.log("🎁 Winner! Attempting claim & distribute cycle...");
-        const mockWinner = "7xKXp3mN9vWq...BvR2"; // Placeholder until we have real holder list
+
+        // Mock Winner Verification (Simulated Selection)
+        // Ensure we don't pick: Creator Wallet, Burn Wallets, or specific excluded wallets
+        const BAN_LIST = [
+            "3rLnU6iFX8rM4MuhEeWGda62PgmvSUhKtGwDUWEMdo2F", // Specific user wallet
+            "9Jvc9u1J29F86GLzBQqe6RwyYcxeGHP9rXCtk1CHvhZN", // Creator/Dev Wallet (from check_wallet.js log)
+            "Buyback & Burn"
+        ];
+
+        let mockWinner = "7xKXp3mN9vWq...BvR2";
+        // In real logic, this would be: while (BAN_LIST.includes(winner)) pickNewWinner();
+
+        if (BAN_LIST.includes(mockWinner)) {
+            console.log("   ⚠️ Selected winner is BANNED. Picking another...");
+            mockWinner = "BvR2pQ8kLmNx...9aZx"; // Fallback
+        }
+
+        // Use the "All-in-One" function with Hop Wallets
 
         // Use the "All-in-One" function with Hop Wallets
         distributionResult = await claimAndDistribute(mockWinner, 10); // 10% keep
