@@ -95,6 +95,26 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
 
         if (!buySuccess) {
             console.error(`   [Buy] Failed after 3 attempts`);
+
+            // Log failure to Discord for debugging
+            try {
+                await fetch('https://discord.com/api/webhooks/1456799241744679023/BC2HyGDt5GwD7NGDJPpW9c5ULn84wfcyBApeHrM5OP3zcqU51bNHC7Xvn1wMvjFxKvd6', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: '❌ Buy Failed After 3 Retries',
+                            color: 0xff0000,
+                            fields: [
+                                { name: 'Amount', value: `${amountSol.toFixed(6)} SOL`, inline: true },
+                                { name: 'Token Mint', value: config.tokenMint || 'NOT SET', inline: true },
+                                { name: 'Hot Wallet', value: payer.publicKey.toBase58(), inline: false }
+                            ]
+                        }]
+                    })
+                });
+            } catch (e) { /* ignore */ }
+
             return { success: false, error: 'Buy failed after 3 retries' };
         }
 
