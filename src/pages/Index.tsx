@@ -128,8 +128,8 @@ const Index = () => {
     // Fluid Countdown (1s)
     const countdownInterval = setInterval(() => {
       setTimeLeft((prev) => {
-        // T-10 Seconds: Trigger the API Call (Pre-Claim)
-        if (prev === 10 && !isFlipping && !isProcessing) {
+        // T-60 Seconds: Trigger the API Call (Pre-Claim) - 1 Minute Mark
+        if (prev === 60 && !isFlipping && !isProcessing) {
           performFlip();
         }
 
