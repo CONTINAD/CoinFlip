@@ -446,6 +446,33 @@ const Index = () => {
             </div>
           </section>
 
+          {/* Contract Address Display */}
+          {tokenMint && (
+            <section className="mb-6">
+              <div className="rounded-2xl glass-premium p-4 border border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-primary/5">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center border border-primary/20">
+                      <span className="text-primary font-bold text-sm">CA</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Contract Address</span>
+                      <code className="text-sm font-mono text-primary break-all">{tokenMint}</code>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(tokenMint);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-sm font-medium transition-all"
+                  >
+                    Copy CA
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Leaderboard & Burn Stats */}
           <section className="mb-10">
             <Leaderboard entries={leaderboardEntries} totalBurnedSol={totalBurnedSol} />
