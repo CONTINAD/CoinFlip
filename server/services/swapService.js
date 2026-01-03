@@ -6,7 +6,7 @@ import bs58 from 'bs58';
 
 /*
  * Swap & Burn Service
- * Handles the "Buyback & Burn" flow using PumpFun
+ * Handles the "Buyback & Burn" flow using Bonk.fun
  */
 
 let connection = null;
@@ -36,12 +36,12 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
         const mint = new PublicKey(config.tokenMint);
 
         // 1. BUY TOKENS via PumpPortal
-        console.log(`   [Buy] Purchasing on PumpFun...`);
+        console.log(`   [Buy] Purchasing on Bonk.fun...`);
 
         let buySignature = null;
         let boughtAmount = 0; // We need to fetch this or estimate it
 
-        // PumpPortal Trade API
+        // PumpPortal Trade API for Bonk.fun
         // "action": "buy"
         const response = await fetch('https://pumpportal.fun/api/trade-local', {
             method: 'POST',
@@ -56,7 +56,7 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
                 denominatedInSol: 'true',
                 slippage: 10, // High slippage for guaranteed execution
                 priorityFee: 0.0001,
-                pool: 'pump'
+                pool: 'bonk' // Changed from 'pump' to 'bonk' for bonk.fun
             })
         });
 

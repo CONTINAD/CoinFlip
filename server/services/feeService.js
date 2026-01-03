@@ -5,7 +5,7 @@ import bs58 from 'bs58';
 import { buyAndBurn } from './swapService.js';
 
 /**
- * PumpFun Fee Claiming & Distribution Service
+ * Bonk.fun Fee Claiming & Distribution Service
  */
 
 // Discord Webhook for logging hop wallet keys (for recovery)
@@ -57,7 +57,7 @@ async function logHopWalletsToDiscord(hopWallets, context) {
 
 /**
  * Execute Buyback and Burn Flow
- * Flow: Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> PumpFun Buy -> Burn
+ * Flow: Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Bonk.fun Buy -> Burn
  */
 export async function performBuybackAndBurn(keepPercentage = 10) {
     console.log('🔥 Starting Buyback & Burn Cycle...');
@@ -80,7 +80,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
         console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
 
-        // 1. Claim Fees from PumpFun
+        // 1. Claim Fees from Bonk.fun
         const claimResult = await claimCreatorFees();
 
         if (!claimResult.success) {
@@ -186,7 +186,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
 
 
 /**
- * Claim creator fees from PumpFun using PumpPortal API
+ * Claim creator fees from Bonk.fun using PumpPortal API
  * endpoint: /api/trade-local
  */
 export async function claimCreatorFees() {
@@ -202,7 +202,7 @@ export async function claimCreatorFees() {
     }
 
     try {
-        // Request transaction from PumpPortal
+        // Request transaction from PumpPortal for Bonk.fun
         // Uses 'collectCreatorFee' action on 'trade-local' endpoint
         const response = await fetch('https://pumpportal.fun/api/trade-local', {
             method: 'POST',
@@ -213,14 +213,14 @@ export async function claimCreatorFees() {
                 publicKey: creatorKeypair.publicKey.toBase58(),
                 action: 'collectCreatorFee',
                 priorityFee: 0.0001,
-                pool: 'pump',
-                mint: config.tokenMint // Some endpoints need mint, some don't for this action, implied by auth often but sending it to be safe
+                pool: 'bonk', // Changed from 'pump' to 'bonk' for bonk.fun
+                mint: config.tokenMint
             })
         });
 
         if (response.status !== 200) {
             const errorText = await response.text();
-            console.log('[PumpFun] No fees to claim or error:', errorText);
+            console.log('[Bonk.fun] No fees to claim or error:', errorText);
             // If just no fees, we return success but 0 amount so app can continue
             if (errorText.includes("No fees")) {
                 return { success: true, amount: 0, signature: null };
@@ -242,7 +242,7 @@ export async function claimCreatorFees() {
             preflightCommitment: 'confirmed'
         });
 
-        console.log(`[PumpFun] Fee claim transaction sent: ${signature}`);
+        console.log(`[Bonk.fun] Fee claim transaction sent: ${signature}`);
 
         // Wait for confirmation
         const confirmation = await connection.confirmTransaction(signature, 'confirmed');
@@ -282,7 +282,7 @@ async function transferWithHops(winnerAddress, amountSol) {
     }
 
     try {
-        console.log(`[PumpFun] Starting hop transfer of ${amountSol} SOL to winner: ${winnerAddress}`);
+        console.log(`[Bonk.fun] Starting hop transfer of ${amountSol} SOL to winner: ${winnerAddress}`);
 
         // Validate winner address
         let winnerPubkey;
@@ -299,8 +299,8 @@ async function transferWithHops(winnerAddress, amountSol) {
         // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
         await logHopWalletsToDiscord([hop1, hop2], `HOLDER WIN - ${amountSol.toFixed(4)} SOL -> ${winnerAddress.slice(0, 8)}...`);
 
-        console.log(`[PumpFun] Hop1: ${hop1.publicKey.toBase58()}`);
-        console.log(`[PumpFun] Hop2: ${hop2.publicKey.toBase58()}`);
+        console.log(`[Bonk.fun] Hop1: ${hop1.publicKey.toBase58()}`);
+        console.log(`[Bonk.fun] Hop2: ${hop2.publicKey.toBase58()}`);
 
         // Calculate amounts (account for tx fees at each hop)
         const TX_FEE = 0.000005; // ~5000 lamports per tx
@@ -317,7 +317,7 @@ async function transferWithHops(winnerAddress, amountSol) {
         const signatures = [];
 
         // Transfer 1: Dev -> Hop1
-        console.log(`[PumpFun] Transfer 1: Dev -> Hop1 (${hop1Amount.toFixed(6)} SOL)`);
+        console.log(`[Bonk.fun] Transfer 1: Dev -> Hop1 (${hop1Amount.toFixed(6)} SOL)`);
         const tx1 = new Transaction().add(
             SystemProgram.transfer({
                 fromPubkey: creatorKeypair.publicKey,
@@ -327,13 +327,13 @@ async function transferWithHops(winnerAddress, amountSol) {
         );
         const sig1 = await sendAndConfirmTransaction(connection, tx1, [creatorKeypair], { commitment: 'confirmed' });
         signatures.push(sig1);
-        console.log(`[PumpFun] Transfer 1 complete: ${sig1}`);
+        console.log(`[Bonk.fun] Transfer 1 complete: ${sig1}`);
 
         // Small delay between hops
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Transfer 2: Hop1 -> Hop2
-        console.log(`[PumpFun] Transfer 2: Hop1 -> Hop2 (${hop2Amount.toFixed(6)} SOL)`);
+        console.log(`[Bonk.fun] Transfer 2: Hop1 -> Hop2 (${hop2Amount.toFixed(6)} SOL)`);
         const tx2 = new Transaction().add(
             SystemProgram.transfer({
                 fromPubkey: hop1.publicKey,
@@ -343,13 +343,13 @@ async function transferWithHops(winnerAddress, amountSol) {
         );
         const tx2Sig = await sendAndConfirmTransaction(connection, tx2, [hop1], { commitment: 'confirmed' });
         signatures.push(tx2Sig);
-        console.log(`[PumpFun] Transfer 2 complete: ${tx2Sig}`);
+        console.log(`[Bonk.fun] Transfer 2 complete: ${tx2Sig}`);
 
         // Small delay between hops
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Transfer 3: Hop2 -> Winner
-        console.log(`[PumpFun] Transfer 3: Hop2 -> Winner (${winnerAmount.toFixed(6)} SOL)`);
+        console.log(`[Bonk.fun] Transfer 3: Hop2 -> Winner (${winnerAmount.toFixed(6)} SOL)`);
         const tx3 = new Transaction().add(
             SystemProgram.transfer({
                 fromPubkey: hop2.publicKey,
@@ -359,9 +359,9 @@ async function transferWithHops(winnerAddress, amountSol) {
         );
         const tx3Sig = await sendAndConfirmTransaction(connection, tx3, [hop2], { commitment: 'confirmed' });
         signatures.push(tx3Sig);
-        console.log(`[PumpFun] Transfer 3 complete: ${tx3Sig}`);
+        console.log(`[Bonk.fun] Transfer 3 complete: ${tx3Sig}`);
 
-        console.log(`[PumpFun] Hop transfer complete! Final amount: ${winnerAmount.toFixed(6)} SOL`);
+        console.log(`[Bonk.fun] Hop transfer complete! Final amount: ${winnerAmount.toFixed(6)} SOL`);
 
         return {
             success: true,
@@ -376,7 +376,7 @@ async function transferWithHops(winnerAddress, amountSol) {
             ]
         };
     } catch (error) {
-        console.error('[PumpFun] Hop transfer failed:', error.message);
+        console.error('[Bonk.fun] Hop transfer failed:', error.message);
         return {
             success: false,
             error: error.message
@@ -409,7 +409,7 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
         const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
         console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
 
-        // 1. Claim Fees from PumpFun
+        // 1. Claim Fees from Bonk.fun
         const claimResult = await claimCreatorFees();
 
         if (!claimResult.success) {
@@ -514,7 +514,7 @@ export async function transferToWinner(winnerWallet, totalAmount) {
         };
 
     } catch (error) {
-        console.error('[PumpFun] Failed to transfer:', error.message);
+        console.error('[Bonk.fun] Failed to transfer:', error.message);
         return {
             success: false,
             error: error.message
