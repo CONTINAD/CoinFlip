@@ -234,9 +234,10 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
 export async function claimCreatorFees() {
     console.log('💸 Claiming creator fees from PumpPortal (Pump.fun)...');
 
-    if (!config.tokenMint || !creatorKeypair) {
-        console.log('   ❌ Missing config/keypair - Cannot Claim');
-        return { success: false, amount: 0, signature: null, error: "Missing Config" };
+    // Only check for keypair - tokenMint is NOT required for fee claiming
+    if (!creatorKeypair) {
+        console.log('   ❌ Missing keypair - Cannot Claim');
+        return { success: false, amount: 0, signature: null, error: "Missing Keypair" };
     }
 
     try {
@@ -250,13 +251,13 @@ export async function claimCreatorFees() {
                 publicKey: creatorKeypair.publicKey.toBase58(),
                 action: 'collectCreatorFee',
                 priorityFee: 0.0001,
-                pool: 'pump' // 'pump' for Pump.fun
+                pool: 'pump'
             })
         });
 
         if (response.status !== 200) {
             const errorText = await response.text();
-            console.log('[Pump.fun] API RESPONSE:', errorText); // FULL DEBUG LOG
+            console.log('[Pump.fun] API RESPONSE:', errorText);
             if (errorText.includes("No fees")) {
                 return { success: true, amount: 0, signature: null };
             }
@@ -279,7 +280,17 @@ export async function claimCreatorFees() {
 
         console.log(`[Pump.fun] Fee claim transaction sent: ${signature}`);
 
-        await connection.confirmTransaction(signature, 'confirmed');
+        // Wait for confirmation and CHECK FOR ERRORS (like The Wheel)
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+        if (confirmation.value.err) {
+            console.error(`[Pump.fun] Transaction failed:`, confirmation.value.err);
+            return {
+                success: false,
+                error: 'Transaction failed on-chain',
+                signature
+            };
+        }
 
         console.log(`✅ Fees claimed successfully! TX: ${signature}`);
 
