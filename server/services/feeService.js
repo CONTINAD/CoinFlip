@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { Connection, Keypair, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch'; // Using native Node.js fetch
 import bs58 from 'bs58';
 import { buyAndBurn } from './swapService.js';
 
