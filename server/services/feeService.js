@@ -121,67 +121,73 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
         console.log(`   [Buyback] ${buyAmount.toFixed(6)} SOL`);
 
-        // Generate hop wallets
-        const hop1 = Keypair.generate();
-        const hop2 = Keypair.generate();
-        const hop3 = Keypair.generate(); // This will receive funds and BUY
-
-        // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
-        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${claimedSol.toFixed(4)} SOL`);
-
-        console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${hop3.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
-
-        const TX_FEE = 0.000005;
-        const GAS_RESERVE = 0.0001;
-
-        const hop1Amount = buyAmount - TX_FEE;
-        const hop2Amount = hop1Amount - TX_FEE;
-        // Safety Check: Ensure we don't spend more than we claimed (minus gas buffer)
-        // If claimedAmount is huge, this is fine. If it's small, we must be careful.
-        // The buyback calculation is strictly based on the delta, so it is safe.
-        // We implicitly assume base wallet has enough for gas (0.005 SOL buffer elsewhere).
-
-        console.log(`   [Calculation] Claimed: ${claimedSol.toFixed(6)} | Keep: ${keepAmount.toFixed(6)} | Buyback: ${buyAmount.toFixed(6)}`);
-
         if (buyAmount <= 0.002) {
             console.log("   ⚠️ Amount too small for buyback after gas fees");
             return { success: true, type: 'burn', claimed: claimedSol, burnedAmount: 0, note: "Skipped (dust)" };
         }
-        const hop3Amount = hop2Amount - TX_FEE;
-        const finalBuyPower = hop3Amount - GAS_RESERVE;
 
-        if (finalBuyPower < 0.0001) {
-            console.log('   ⚠️ Amount too small for buyback after gas fees');
-            return { success: true, claimed: claimedSol, buyTx: null, burnTx: null, note: 'Amount too small for buyback' };
+        // Use dedicated burn wallet if configured, otherwise generate hop wallets
+        let burnWallet;
+        let transferSig;
+
+        if (config.burnWalletPrivateKey) {
+            // DEDICATED BURN WALLET - More efficient, accumulates SOL
+            burnWallet = Keypair.fromSecretKey(bs58.decode(config.burnWalletPrivateKey));
+            console.log(`   [Burn Wallet] Using dedicated wallet: ${burnWallet.publicKey.toBase58().slice(0, 8)}...`);
+
+            const TX_FEE = 0.000005;
+            const transferAmount = buyAmount - TX_FEE;
+
+            // Single transfer: Dev -> Burn Wallet
+            transferSig = await sendAndConfirmTransaction(connection, new Transaction().add(
+                SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: burnWallet.publicKey, lamports: Math.floor(transferAmount * LAMPORTS_PER_SOL) })
+            ), [creatorKeypair], { commitment: 'confirmed' });
+
+            console.log(`   [Transfer] Dev -> Burn Wallet: ${transferSig}`);
+        } else {
+            // FALLBACK: Generate hop wallets (less efficient but works without burn wallet)
+            const hop1 = Keypair.generate();
+            const hop2 = Keypair.generate();
+            burnWallet = Keypair.generate();
+
+            await logHopWalletsToDiscord([hop1, hop2, burnWallet], `BURN - ${claimedSol.toFixed(4)} SOL`);
+            console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${burnWallet.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
+
+            const TX_FEE = 0.000005;
+            const hop1Amount = buyAmount - TX_FEE;
+            const hop2Amount = hop1Amount - TX_FEE;
+            const hop3Amount = hop2Amount - TX_FEE;
+
+            // 3-hop transfer sequence
+            const sig1 = await sendAndConfirmTransaction(connection, new Transaction().add(
+                SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: hop1.publicKey, lamports: Math.floor(hop1Amount * LAMPORTS_PER_SOL) })
+            ), [creatorKeypair], { commitment: 'confirmed' });
+            await new Promise(r => setTimeout(r, 1000));
+
+            const sig2 = await sendAndConfirmTransaction(connection, new Transaction().add(
+                SystemProgram.transfer({ fromPubkey: hop1.publicKey, toPubkey: hop2.publicKey, lamports: Math.floor(hop2Amount * LAMPORTS_PER_SOL) })
+            ), [hop1], { commitment: 'confirmed' });
+            await new Promise(r => setTimeout(r, 1000));
+
+            transferSig = await sendAndConfirmTransaction(connection, new Transaction().add(
+                SystemProgram.transfer({ fromPubkey: hop2.publicKey, toPubkey: burnWallet.publicKey, lamports: Math.floor(hop3Amount * LAMPORTS_PER_SOL) })
+            ), [hop2], { commitment: 'confirmed' });
         }
 
-        // --- Transfer Sequence ---
-        const signatures = [];
-
-        // T1: Dev -> Hop1
-        const sig1 = await sendAndConfirmTransaction(connection, new Transaction().add(
-            SystemProgram.transfer({ fromPubkey: creatorKeypair.publicKey, toPubkey: hop1.publicKey, lamports: Math.floor(hop1Amount * LAMPORTS_PER_SOL) })
-        ), [creatorKeypair], { commitment: 'confirmed' });
-        signatures.push(sig1);
+        // Check burn wallet balance
         await new Promise(r => setTimeout(r, 1000));
+        const burnWalletBalance = await connection.getBalance(burnWallet.publicKey);
+        const finalBuyPower = (burnWalletBalance / LAMPORTS_PER_SOL) - 0.003; // Leave 0.003 for gas/rent
 
-        // T2: Hop1 -> Hop2
-        const sig2 = await sendAndConfirmTransaction(connection, new Transaction().add(
-            SystemProgram.transfer({ fromPubkey: hop1.publicKey, toPubkey: hop2.publicKey, lamports: Math.floor(hop2Amount * LAMPORTS_PER_SOL) })
-        ), [hop1], { commitment: 'confirmed' });
-        signatures.push(sig2);
-        await new Promise(r => setTimeout(r, 1000));
+        console.log(`   [Burn Wallet] Balance: ${(burnWalletBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL | Buy Power: ${finalBuyPower.toFixed(6)} SOL`);
 
-        // T3: Hop2 -> Hop3
-        const sig3 = await sendAndConfirmTransaction(connection, new Transaction().add(
-            SystemProgram.transfer({ fromPubkey: hop2.publicKey, toPubkey: hop3.publicKey, lamports: Math.floor(hop3Amount * LAMPORTS_PER_SOL) })
-        ), [hop2], { commitment: 'confirmed' });
-        signatures.push(sig3);
-
-        console.log(`   [Hops] Funds arrived at Buyer Wallet: ${hop3.publicKey.toBase58()}`);
+        if (finalBuyPower < 0.001) {
+            console.log('   ⚠️ Burn wallet balance too low for buy');
+            return { success: true, claimed: claimedSol, buyTx: null, burnTx: null, note: 'Burn wallet needs more SOL' };
+        }
 
         // 4. BUY AND BURN
-        const burnResult = await buyAndBurn(hop3, finalBuyPower);
+        const burnResult = await buyAndBurn(burnWallet, finalBuyPower);
 
         // Log result to Discord
         if (burnResult.success) {

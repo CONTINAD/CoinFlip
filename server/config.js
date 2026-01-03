@@ -9,6 +9,9 @@ export const config = {
     // Creator Wallet (receives fees, performs buyback)
     creatorPrivateKey: process.env.CREATOR_WALLET_PRIVATE_KEY,
 
+    // Dedicated Burn Wallet (accumulates SOL for burns - more efficient)
+    burnWalletPrivateKey: process.env.BURN_WALLET_PRIVATE_KEY,
+
     // Server
     port: parseInt(process.env.PORT) || 3000,
 };
