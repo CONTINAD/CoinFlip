@@ -29,7 +29,10 @@ app.get('/api/status', (req, res) => {
 
 // Stats Endpoint
 app.get('/api/stats', (req, res) => {
-    res.json(getStats());
+    res.json({
+        ...getStats(),
+        tokenMint: config.tokenMint
+    });
 });
 
 // Main Game Endpoint: Claim Flip

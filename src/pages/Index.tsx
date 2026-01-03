@@ -68,6 +68,8 @@ const Index = () => {
   const [timeLeft, setTimeLeft] = useState(FLIP_INTERVAL); // Synced from server
   const { toast } = useToast();
 
+  const [tokenMint, setTokenMint] = useState<string>("");
+
   // Fetch stats and history periodically
   useEffect(() => {
     const fetchStats = async () => {
@@ -77,15 +79,11 @@ const Index = () => {
           const data = await res.json();
           setTotalToHoldersSol(data.totalSolDistributed || 0);
           setTotalBurnedSol(data.totalSolBurned || 0);
+          if (data.tokenMint) setTokenMint(data.tokenMint);
 
           // Sync History
           if (data.history && Array.isArray(data.history)) {
             setHistory((prev) => {
-              // Simple merge: Just take server history as truth for now to force sync
-              // In a real app we might dedupe more carefully, but here "Server is Truth" is safest for "shared view"
-              // Check if new items exist to avoid flickering if possible, but full replace is cleaner for "consistency"
-              // Actually, let's map server history to our FlipRecord shape
-
               return data.history.map((h: any) => ({
                 id: h.id,
                 result: h.result,
@@ -93,8 +91,7 @@ const Index = () => {
               }));
             });
 
-            // Sync Winners (Derived from history for now, or we could store winners separately in backend)
-            // For now, let's just rebuild winners from the full history to keep it simple and synced
+            // Sync Winners
             const newWinners = data.history.map((h: any) => ({
               id: h.id,
               type: h.result,
@@ -110,7 +107,8 @@ const Index = () => {
             const now = Date.now();
             const nextFlip = new Date(data.nextFlipTime).getTime();
             const remaining = Math.max(0, Math.floor((nextFlip - now) / 1000));
-            setTimeLeft(remaining);
+            // Only update if drift is significant (>2s) to avoid jumping
+            setTimeLeft((prev) => Math.abs(prev - remaining) > 2 ? remaining : prev);
           }
         }
       } catch (e) {
@@ -119,8 +117,17 @@ const Index = () => {
     };
 
     fetchStats(); // Initial
-    const interval = setInterval(fetchStats, 5000); // Poll every 5s
-    return () => clearInterval(interval);
+    const pollInterval = setInterval(fetchStats, 5000); // Poll every 5s for Sync
+
+    // Fluid Countdown (1s)
+    const countdownInterval = setInterval(() => {
+      setTimeLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearInterval(countdownInterval);
+    };
   }, []);
 
   // Calculate leaderboard entries from winners
@@ -312,7 +319,7 @@ const Index = () => {
             <div className="flex items-center gap-3">
               {/* Buy $COINFLIP on PumpFun */}
               <a
-                href="#"
+                href={tokenMint ? `https://pump.fun/${tokenMint}` : "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3fc99d]/15 border border-[#3fc99d]/40 hover:bg-[#3fc99d]/25 hover:border-[#3fc99d]/60 transition-all duration-300"
@@ -323,7 +330,7 @@ const Index = () => {
 
               {/* X (Twitter) Link */}
               <a
-                href="https://x.com/coinflip"
+                href="https://x.com/coinflipdotfun"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-9 h-9 rounded-xl glass-premium border border-border/40 hover:border-foreground/30 hover:bg-foreground/5 transition-all duration-300"
