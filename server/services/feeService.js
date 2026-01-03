@@ -251,8 +251,7 @@ export async function claimCreatorFees() {
                 publicKey: creatorKeypair.publicKey.toBase58(),
                 action: 'collectCreatorFee',
                 priorityFee: 0.0001,
-                pool: 'pump', // 'pump' for Pump.fun
-                mint: config.tokenMint
+                pool: 'pump' // 'pump' for Pump.fun
             })
         });
 
