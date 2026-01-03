@@ -270,7 +270,7 @@ export async function claimCreatorFees() {
     }
 
     try {
-        // Request transaction from PumpPortal
+        // Request transaction from PumpPortal - include mint address
         const response = await fetch('https://pumpportal.fun/api/trade-local', {
             method: 'POST',
             headers: {
@@ -279,7 +279,8 @@ export async function claimCreatorFees() {
             body: JSON.stringify({
                 publicKey: creatorKeypair.publicKey.toBase58(),
                 action: 'collectCreatorFee',
-                priorityFee: 0.0001,
+                mint: config.tokenMint, // Required for fee claiming
+                priorityFee: 0.00001, // Minimum fee
                 pool: 'pump'
             })
         });
@@ -460,7 +461,8 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     try {
         // Track SOL balance BEFORE claim
         console.log(`   [Wallet] Using creator: ${creatorKeypair.publicKey.toBase58()}`);
-        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
+        // Force confirmed commitment for accurate balance
+        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey, 'confirmed');
         console.log(`   [Balance Before] ${(balanceBefore / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
         // 1. Claim Fees from Pump.fun (SOL)
