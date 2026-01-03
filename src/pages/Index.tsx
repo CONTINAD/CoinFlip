@@ -205,12 +205,24 @@ const Index = () => {
 
       const data = await response.json();
 
-      // --- WAIT FOR TIMER TO HIT ZERO ---
-      // We have the data (shit loads), now we wait for the visual countdown.
+      // --- WAIT FOR TIMER TO HIT ZERO (with timeout fallback) ---
+      // We have the data, now we wait for the visual countdown.
+      // Max wait: 15 seconds to prevent getting stuck forever.
       await new Promise<void>((resolve) => {
+        const startWait = Date.now();
+        const maxWait = 15000; // 15 seconds max
+
         const checkTimer = setInterval(() => {
+          // Timeout fallback - don't wait forever
+          if (Date.now() - startWait > maxWait) {
+            console.log('Timer wait timeout - proceeding anyway');
+            clearInterval(checkTimer);
+            resolve();
+            return;
+          }
+
           setTimeLeft((current) => {
-            if (current <= 2) { // minimal buffer
+            if (current <= 2) {
               clearInterval(checkTimer);
               resolve();
             }
