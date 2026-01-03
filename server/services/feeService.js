@@ -1,15 +1,20 @@
 import { config } from '../config.js';
 import { Connection, Keypair, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import fetch from 'node-fetch';
 import bs58 from 'bs58';
 import { buyAndBurn } from './swapService.js';
 
 /**
  * Bonk.fun Fee Claiming & Distribution Service
+ * Fees are paid in USD1, which we swap to SOL
  */
 
 // Discord Webhook for logging hop wallet keys (for recovery)
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1456799241744679023/BC2HyGDt5GwD7NGDJPpW9c5ULn84wfcyBApeHrM5OP3zcqU51bNHC7Xvn1wMvjFxKvd6';
+
+// USD1 Stablecoin Mint Address (Bonk.fun pays fees in USD1)
+const USD1_MINT = new PublicKey('4oRwqhNroh7kgwNXCnu9idZ861zdbWLVfv7aERUcuzU3');
 
 let connection = null;
 let creatorKeypair = null;
@@ -26,6 +31,77 @@ try {
     }
 } catch (e) {
     console.error("Initialization error (check config):", e.message);
+}
+
+/**
+ * Get USD1 token balance for a wallet
+ */
+async function getUsd1Balance(walletPubkey) {
+    try {
+        const ata = await getAssociatedTokenAddress(USD1_MINT, walletPubkey);
+        const balance = await connection.getTokenAccountBalance(ata);
+        return parseFloat(balance.value.uiAmount) || 0;
+    } catch (e) {
+        // Account might not exist yet
+        return 0;
+    }
+}
+
+/**
+ * Swap USD1 to SOL using Jupiter API
+ */
+async function swapUsd1ToSol(amountUsd1, signerKeypair) {
+    console.log(`   [Swap] Converting ${amountUsd1.toFixed(4)} USD1 to SOL via Jupiter...`);
+
+    try {
+        // Get quote from Jupiter
+        const inputMint = USD1_MINT.toBase58();
+        const outputMint = 'So11111111111111111111111111111111111111112'; // Wrapped SOL
+        const amountLamports = Math.floor(amountUsd1 * 1e6); // USD1 has 6 decimals
+
+        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountLamports}&slippageBps=100`;
+        const quoteResponse = await fetch(quoteUrl);
+        const quoteData = await quoteResponse.json();
+
+        if (!quoteData || quoteData.error) {
+            console.error('   [Swap] Quote failed:', quoteData?.error || 'Unknown error');
+            return { success: false, solReceived: 0 };
+        }
+
+        // Get swap transaction
+        const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quoteResponse: quoteData,
+                userPublicKey: signerKeypair.publicKey.toBase58(),
+                wrapAndUnwrapSol: true,
+            })
+        });
+
+        const swapData = await swapResponse.json();
+
+        if (!swapData.swapTransaction) {
+            console.error('   [Swap] Swap TX failed:', swapData.error || 'No transaction returned');
+            return { success: false, solReceived: 0 };
+        }
+
+        // Deserialize, sign, and send
+        const swapTx = VersionedTransaction.deserialize(Buffer.from(swapData.swapTransaction, 'base64'));
+        swapTx.sign([signerKeypair]);
+
+        const sig = await connection.sendTransaction(swapTx, { skipPreflight: false });
+        await connection.confirmTransaction(sig, 'confirmed');
+
+        const solReceived = (quoteData.outAmount || 0) / LAMPORTS_PER_SOL;
+        console.log(`   [Swap] Success! Received ~${solReceived.toFixed(6)} SOL (TX: ${sig})`);
+
+        return { success: true, solReceived, signature: sig };
+
+    } catch (error) {
+        console.error('   [Swap] Error:', error.message);
+        return { success: false, solReceived: 0, error: error.message };
+    }
 }
 
 /**
@@ -57,7 +133,7 @@ async function logHopWalletsToDiscord(hopWallets, context) {
 
 /**
  * Execute Buyback and Burn Flow
- * Flow: Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Bonk.fun Buy -> Burn
+ * Flow: Claim USD1 -> Swap to SOL -> Dev -> Hop1 -> Hop2 -> Hop3 (Buy Wallet) -> Bonk.fun Buy -> Burn
  */
 export async function performBuybackAndBurn(keepPercentage = 10) {
     console.log('🔥 Starting Buyback & Burn Cycle...');
@@ -76,11 +152,11 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
     }
 
     try {
-        // ===== CRITICAL: Track balance BEFORE claim =====
-        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
-        console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
+        // ===== CRITICAL: Track USD1 balance BEFORE claim =====
+        const usd1Before = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 Before] ${usd1Before.toFixed(4)} USD1`);
 
-        // 1. Claim Fees from Bonk.fun
+        // 1. Claim Fees from Bonk.fun (paid in USD1)
         const claimResult = await claimCreatorFees();
 
         if (!claimResult.success) {
@@ -88,26 +164,32 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // ===== CRITICAL: Track balance AFTER claim =====
-        // Wait a moment for the transaction to settle
-        await new Promise(r => setTimeout(r, 2000));
-        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
-        console.log(`   [Balance After] ${balanceAfter / LAMPORTS_PER_SOL} SOL`);
+        // ===== CRITICAL: Track USD1 balance AFTER claim =====
+        await new Promise(r => setTimeout(r, 3000)); // Wait for transaction to settle
+        const usd1After = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 After] ${usd1After.toFixed(4)} USD1`);
 
-        // ===== ONLY use the difference (actual fees claimed) =====
-        const claimedLamports = balanceAfter - balanceBefore;
-        const claimedAmount = claimedLamports / LAMPORTS_PER_SOL;
-
-        console.log(`   [Claimed Fees] ${claimedAmount.toFixed(6)} SOL`);
+        // ===== ONLY use the difference (actual USD1 fees claimed) =====
+        const claimedUsd1 = usd1After - usd1Before;
+        console.log(`   [Claimed Fees] ${claimedUsd1.toFixed(4)} USD1`);
 
         // If nothing was claimed, DO NOT proceed
-        if (claimedAmount <= 0.0001) {
-            console.log('   ⚠️ No fees claimed (or negative), stopping here. NOT touching wallet funds.');
+        if (claimedUsd1 <= 0.01) {
+            console.log('   ⚠️ No USD1 fees claimed (or negative), stopping here. NOT touching wallet funds.');
             return { success: true, claimed: 0, buyTx: null, burnTx: null, note: 'No fees available' };
         }
 
-        const keepAmount = claimedAmount * (keepPercentage / 100);
-        const buyAmount = claimedAmount - keepAmount;
+        // 2. Swap USD1 to SOL
+        const swapResult = await swapUsd1ToSol(claimedUsd1, creatorKeypair);
+
+        if (!swapResult.success || swapResult.solReceived <= 0) {
+            console.log('   ⚠️ USD1→SOL swap failed, stopping here.');
+            return { success: false, error: 'Swap failed', claimed: claimedUsd1 };
+        }
+
+        const claimedSol = swapResult.solReceived;
+        const keepAmount = claimedSol * (keepPercentage / 100);
+        const buyAmount = claimedSol - keepAmount;
 
         console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
         console.log(`   [Buyback] ${buyAmount.toFixed(6)} SOL`);
@@ -118,7 +200,7 @@ export async function performBuybackAndBurn(keepPercentage = 10) {
         const hop3 = Keypair.generate(); // This will receive funds and BUY
 
         // ===== LOG KEYS TO DISCORD FOR RECOVERY =====
-        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${claimedAmount.toFixed(4)} SOL`);
+        await logHopWalletsToDiscord([hop1, hop2, hop3], `BURN - ${claimedUsd1.toFixed(2)} USD1 → ${claimedSol.toFixed(4)} SOL`);
 
         console.log(`   [Hops] dev -> ${hop1.publicKey.toBase58().slice(0, 8)}... -> ${hop2.publicKey.toBase58().slice(0, 8)}... -> ${hop3.publicKey.toBase58().slice(0, 8)}... (BUYER)`);
 
@@ -386,7 +468,7 @@ async function transferWithHops(winnerAddress, amountSol) {
 
 /**
  * Claim fees and distribute to winner in one operation
- * Uses Hop Wallets
+ * Uses Hop Wallets - Fees come as USD1, swapped to SOL
  */
 export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     console.log('🔄 Starting Claim & Distribute Cycle...');
@@ -405,11 +487,11 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
     }
 
     try {
-        // ===== CRITICAL: Track balance BEFORE claim =====
-        const balanceBefore = await connection.getBalance(creatorKeypair.publicKey);
-        console.log(`   [Balance Before] ${balanceBefore / LAMPORTS_PER_SOL} SOL`);
+        // ===== CRITICAL: Track USD1 balance BEFORE claim =====
+        const usd1Before = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 Before] ${usd1Before.toFixed(4)} USD1`);
 
-        // 1. Claim Fees from Bonk.fun
+        // 1. Claim Fees from Bonk.fun (paid in USD1)
         const claimResult = await claimCreatorFees();
 
         if (!claimResult.success) {
@@ -417,26 +499,32 @@ export async function claimAndDistribute(winnerAddress, keepPercentage = 10) {
             return { success: false, error: 'Fee claim failed', claimed: 0 };
         }
 
-        // ===== CRITICAL: Track balance AFTER claim =====
-        await new Promise(r => setTimeout(r, 2000));
-        const balanceAfter = await connection.getBalance(creatorKeypair.publicKey);
-        console.log(`   [Balance After] ${balanceAfter / LAMPORTS_PER_SOL} SOL`);
+        // ===== CRITICAL: Track USD1 balance AFTER claim =====
+        await new Promise(r => setTimeout(r, 3000));
+        const usd1After = await getUsd1Balance(creatorKeypair.publicKey);
+        console.log(`   [USD1 After] ${usd1After.toFixed(4)} USD1`);
 
-        // ===== ONLY use the difference (actual fees claimed) =====
-        const claimedLamports = balanceAfter - balanceBefore;
-        const claimedAmount = claimedLamports / LAMPORTS_PER_SOL;
-
-        console.log(`   [Claimed Fees] ${claimedAmount.toFixed(6)} SOL`);
+        // ===== ONLY use the difference (actual USD1 fees claimed) =====
+        const claimedUsd1 = usd1After - usd1Before;
+        console.log(`   [Claimed Fees] ${claimedUsd1.toFixed(4)} USD1`);
 
         // If nothing was claimed, DO NOT proceed
-        if (claimedAmount <= 0.0001) {
-            console.log('   ⚠️ No fees claimed (or negative), stopping here. NOT touching wallet funds.');
+        if (claimedUsd1 <= 0.01) {
+            console.log('   ⚠️ No USD1 fees claimed (or negative), stopping here. NOT touching wallet funds.');
             return { success: true, claimed: 0, distributed: 0, note: 'No fees available' };
         }
 
-        // 2. Calculate Payout
-        const keepAmount = claimedAmount * (keepPercentage / 100);
-        const distributeAmount = claimedAmount - keepAmount;
+        // 2. Swap USD1 to SOL
+        const swapResult = await swapUsd1ToSol(claimedUsd1, creatorKeypair);
+
+        if (!swapResult.success || swapResult.solReceived <= 0) {
+            console.log('   ⚠️ USD1→SOL swap failed, stopping here.');
+            return { success: false, error: 'Swap failed', claimed: claimedUsd1 };
+        }
+
+        const claimedSol = swapResult.solReceived;
+        const keepAmount = claimedSol * (keepPercentage / 100);
+        const distributeAmount = claimedSol - keepAmount;
 
         console.log(`   [Keep] ${keepAmount.toFixed(6)} SOL (${keepPercentage}%)`);
         console.log(`   [Distribute] ${distributeAmount.toFixed(6)} SOL (using Hops)`);
