@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { Connection, Keypair, PublicKey, VersionedTransaction, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, VersionedTransaction, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, ComputeBudgetProgram } from '@solana/web3.js';
 import { getAssociatedTokenAddress, createBurnInstruction, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import fetch from 'node-fetch';
 import bs58 from 'bs58';
@@ -36,7 +36,7 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
         const mint = new PublicKey(config.tokenMint);
 
         // 1. BUY TOKENS via PumpPortal
-        console.log(`   [Buy] Purchasing on Bonk.fun...`);
+        console.log(`   [Buy] Purchasing on Pump.fun...`);
 
         let buySignature = null;
         let boughtAmount = 0; // We need to fetch this or estimate it
@@ -56,7 +56,7 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
                 denominatedInSol: 'true',
                 slippage: 10, // High slippage for guaranteed execution
                 priorityFee: 0.0001,
-                pool: 'bonk' // Changed from 'pump' to 'bonk' for bonk.fun
+                pool: 'pump' // Target Pump.fun pool
             })
         });
 
@@ -87,21 +87,31 @@ export async function buyAndBurn(hotWalletKeypair, amountSol) {
         const ata = await getAssociatedTokenAddress(mint, payer.publicKey);
 
         // We need to know how much we bought to burn it all.
-        // Fetch balance of ATA
+        // Retry fetching balance up to 12 times (approx 60s) to allow for RPC indexing
         let balance = 0;
-        try {
-            // Wait a sec for indexer
-            await new Promise(r => setTimeout(r, 2000));
-            const tokenBalance = await connection.getTokenAccountBalance(ata);
-            balance = tokenBalance.value.amount; // RAW Amount
-            console.log(`   [Burn] Balance to burn: ${tokenBalance.value.uiAmount}`);
-        } catch (e) {
-            console.log("   [Burn] Could not fetch balance (maybe no ATA yet?):", e.message);
-            return { success: true, buyTx: buySignature, burnTx: null, note: "Buy success, Burn skipped (no balance found)" };
+        for (let i = 0; i < 12; i++) {
+            try {
+                // Wait increasing time: 3s + linear backoff
+                await new Promise(r => setTimeout(r, 3000 + (i * 1000)));
+                const tokenBalance = await connection.getTokenAccountBalance(ata);
+                balance = tokenBalance.value.amount; // RAW Amount
+                if (balance > 0) {
+                    console.log(`   [Burn] Balance found: ${tokenBalance.value.uiAmount} (Attempt ${i + 1})`);
+                    break;
+                }
+            } catch (e) {
+                console.log(`   [Burn] Balance check failed (Attempt ${i + 1}):`, e.message);
+            }
+        }
+
+        if (balance == 0) {
+            console.log("   [Burn] Could not find token balance after retries. Burn skipped.");
+            return { success: true, buyTx: buySignature, burnTx: null, note: "Buy success, Burn skipped (slow indexer)" };
         }
 
         if (balance > 0) {
             const burnTx = new Transaction().add(
+                ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }), // Priority Fee
                 createBurnInstruction(
                     ata,
                     mint,
